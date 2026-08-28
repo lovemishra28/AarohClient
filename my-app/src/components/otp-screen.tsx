@@ -11,43 +11,11 @@ import {
   SafeAreaView,
   Alert,
 } from 'react-native';
-import { Image } from 'expo-image';
-import Svg, { Path, Circle } from 'react-native-svg';
+import { BrandLogo } from '@/components/brand/BrandLogo';
+import { FarmerMascot } from '@/components/brand/FarmerMascot';
+import { EditIcon } from '@/components/brand/SvgIcons';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing, MaxContentWidth } from '@/constants/theme';
-
-// --- Custom SVGs ---
-
-const EditIcon = ({ color = '#1F5A2A' }: { color?: string }) => (
-  <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-    <Path d="M12 20h9" />
-    <Path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
-  </Svg>
-);
-
-const LeafIcon = ({ color = '#1F5A2A' }: { color?: string }) => (
-  <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-    <Path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 3.5 1 9.8a7 7 0 0 1-9 8.2z" />
-    <Path d="M9.8 6.1C12 8 15 11 19 12" />
-  </Svg>
-);
-
-const PulseWave = ({ color = '#1F5A2A' }: { color?: string }) => (
-  <View style={styles.pulseContainer}>
-    <View style={[styles.pulseLine, { backgroundColor: color + '40' }]} />
-    <Svg width={50} height={20} viewBox="0 0 50 20" style={styles.pulseSvg}>
-      <Path
-        d="M0 10 H15 L18 2 L22 18 L26 7 L29 13 L32 10 H50"
-        fill="none"
-        stroke={color}
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-    <View style={[styles.pulseLine, { backgroundColor: color + '40' }]} />
-  </View>
-);
 
 interface OtpScreenProps {
   phoneNumber: string;
@@ -132,23 +100,15 @@ export function OtpScreen({ phoneNumber, onVerifySuccess, onBackToLogin }: OtpSc
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Spacer to align layout */}
-          <View style={styles.topSpacer} />
 
-          {/* Branding Logo Section */}
-          <View style={styles.logoContainer}>
-            <Image
-              source={require('@/assets/images/title.png')}
-              style={styles.brandTitleImage}
-              contentFit="contain"
-              priority="high"
-            />
-            <PulseWave color="#1F5A2A" />
+          {/* ─── Brand Logo ─── */}
+          <View style={styles.brandWrapper}>
+            <BrandLogo size="xl" />
           </View>
 
-          {/* Title & Subtitle */}
+          {/* ─── Title & Subtitle ─── */}
           <View style={styles.titleContainer}>
-            <Text style={styles.titleText}>Verify Your Number</Text>
+            <Text style={[styles.titleText, { color: theme.text }]}>Verify Your Number</Text>
             <Text style={[styles.subtitleText, { color: theme.textSecondary }]}>
               We have sent a 4-digit OTP to
             </Text>
@@ -161,24 +121,19 @@ export function OtpScreen({ phoneNumber, onVerifySuccess, onBackToLogin }: OtpSc
                 style={styles.editButton}
                 activeOpacity={0.7}
               >
-                <EditIcon color="#2E8B57" />
+                <EditIcon color="#2E8B57" size={16} />
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* Farmer Mascot Image */}
-          <View style={styles.mascotContainer}>
-            <Image
-              source={require('@/assets/images/farmericon.png')}
-              style={styles.mascotImage}
-              contentFit="contain"
-              priority="high"
-            />
+          {/* ─── Farmer Mascot ─── */}
+          <View style={styles.mascotWrapper}>
+            <FarmerMascot height={260} width={360} />
           </View>
 
-          {/* OTP Input Card */}
+          {/* ─── OTP Card ─── */}
           <View style={[styles.card, { backgroundColor: theme.backgroundElement }]}>
-            {/* Card Header */}
+            
             <Text style={styles.cardTitle}>Enter 4-digit OTP</Text>
 
             {/* OTP Code Fields Row */}
@@ -235,11 +190,17 @@ export function OtpScreen({ phoneNumber, onVerifySuccess, onBackToLogin }: OtpSc
               <Text style={styles.changeNumberText}>Change mobile number</Text>
             </TouchableOpacity>
           </View>
+
+          {/* Bottom breathing space */}
+          <View style={{ height: 32 }} />
+
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
+
+// ─── Styles ──────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -250,65 +211,35 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: Spacing.four,
     alignItems: 'center',
+    maxWidth: MaxContentWidth,
     width: '100%',
     alignSelf: 'center',
-    maxWidth: MaxContentWidth,
   },
-  topSpacer: {
-    height: Spacing.four,
-  },
-  logoContainer: {
-    alignItems: 'center',
-    marginBottom: Spacing.two,
+
+  // ── Brand ──
+  brandWrapper: {
+    marginTop: Platform.OS === 'web' ? 24 : 16,
+    marginBottom: 6,
     width: '100%',
-  },
-  brandTitleRow: {
-    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
   },
-  brandAgro: {
-    fontSize: 36,
-    fontWeight: '900',
-    color: '#E65A00',
-    marginRight: 4,
-  },
-  brandPulse: {
-    fontSize: 36,
-    fontWeight: '800',
-    color: '#2E8B57',
-    fontStyle: 'italic',
-  },
-  pulseContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '60%',
-    height: 20,
-  },
-  pulseLine: {
-    flex: 1,
-    height: 2,
-  },
-  pulseSvg: {
-    marginHorizontal: 2,
-  },
+
+  // ── Title ──
   titleContainer: {
     alignItems: 'center',
-    marginBottom: Spacing.two,
-    paddingHorizontal: Spacing.three,
+    marginBottom: 8,
+    paddingHorizontal: 16,
   },
   titleText: {
-    fontSize: 30,
+    fontSize: 26,
     fontWeight: '800',
-    color: '#1B3C18',
     textAlign: 'center',
-    marginBottom: Spacing.one,
+    letterSpacing: 0.2,
+    marginBottom: 4,
   },
   subtitleText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
     textAlign: 'center',
   },
@@ -320,73 +251,66 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   phoneText: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '800',
   },
   editButton: {
     padding: 4,
   },
-  brandTitleImage: {
-    width: 170,
-    height: 46,
-    marginBottom: 4,
+
+  // ── Mascot ──
+  mascotWrapper: {
+    marginBottom: 12,
   },
-  mascotContainer: {
-    width: '100%',
-    height: 180,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.three,
-  },
-  mascotImage: {
-    width: 260,
-    height: 180,
-  },
+
+  // ── Card ──
   card: {
-    width: '94%',
-    borderRadius: 24,
-    paddingHorizontal: Spacing.three,
-    paddingTop: Spacing.four,
-    paddingBottom: Spacing.four,
+    width: '92%',
+    borderRadius: 22,
+    paddingHorizontal: 18,
+    paddingTop: 18,
+    paddingBottom: 22,
     alignItems: 'center',
     ...Platform.select({
       ios: {
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.12,
-        shadowRadius: 16,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.10,
+        shadowRadius: 14,
       },
       android: {
-        elevation: 8,
+        elevation: 6,
       },
       web: {
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 6 },
+        shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.08,
-        shadowRadius: 20,
+        shadowRadius: 18,
       },
     }),
   },
   cardTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
     color: '#60646C',
-    marginBottom: Spacing.three,
+    marginBottom: 16,
     textAlign: 'center',
   },
+
+  // ── OTP Inputs ──
   otpInputRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
-    paddingHorizontal: Spacing.one,
-    marginBottom: Spacing.three,
+    paddingHorizontal: 12,
+    marginBottom: 16,
     gap: 12,
   },
   otpInputBox: {
     flex: 1,
-    height: 56,
+    height: 54,
     borderWidth: 1,
-    borderColor: '#C0C4CC',
+    borderColor: '#D4D5DA',
     borderRadius: 16,
     backgroundColor: '#FFFFFF',
     fontSize: 22,
@@ -399,51 +323,58 @@ const styles = StyleSheet.create({
       },
     }),
   },
+
+  // ── Timer ──
   timerRow: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: Spacing.three,
+    marginBottom: 16,
   },
   timerTextContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   timerLabel: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: '#60646C',
   },
   timerCount: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
     color: '#2E8B57',
   },
   resendText: {
     color: '#2E8B57',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
     textDecorationLine: 'underline',
   },
+
+  // ── Verify Button ──
   verifyButton: {
     backgroundColor: '#1B3C18',
-    borderRadius: 24,
+    borderRadius: 22,
     paddingVertical: 12,
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
-    marginBottom: Spacing.three,
+    marginBottom: 16,
   },
   verifyButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
+    letterSpacing: 0.2,
   },
+
+  // ── Change Number Link ──
   changeNumberLink: {
     padding: 4,
   },
   changeNumberText: {
     color: '#2E8B57',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
   },
 });

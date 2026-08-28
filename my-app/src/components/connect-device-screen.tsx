@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -10,53 +10,15 @@ import {
   Alert,
 } from 'react-native';
 import { Image } from 'expo-image';
-import Svg, { Path, Line, Circle } from 'react-native-svg';
+import { BrandLogo } from '@/components/brand/BrandLogo';
+import {
+  BluetoothIcon,
+  HelpIcon,
+  LeafIcon,
+  CheckCircleIcon,
+} from '@/components/brand/SvgIcons';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing, MaxContentWidth } from '@/constants/theme';
-
-const PulseWave = ({ color = '#2E8B57' }: { color?: string }) => (
-  <View style={styles.pulseContainer}>
-    <View style={[styles.pulseLine, { backgroundColor: `${color}40` }]} />
-    <Svg width={50} height={20} viewBox="0 0 50 20">
-      <Path
-        d="M0 10 H15 L18 2 L22 18 L26 7 L29 13 L32 10 H50"
-        fill="none"
-        stroke={color}
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-    <View style={[styles.pulseLine, { backgroundColor: `${color}40` }]} />
-  </View>
-);
-
-const BluetoothIcon = ({ color = '#FFFFFF', size = 20 }: { color?: string; size?: number }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-    <Path d="m6.5 6.5 11 11L12 23V1l5.5 5.5-11 11" />
-  </Svg>
-);
-
-const HelpIcon = ({ color = '#E5F5EA' }: { color?: string }) => (
-  <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
-    <Circle cx="12" cy="12" r="9" />
-    <Path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-    <Line x1="12" y1="17" x2="12.01" y2="17" />
-  </Svg>
-);
-
-const LeafIcon = ({ color = '#2E8B57' }: { color?: string }) => (
-  <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-    <Path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 3.5 1 9.8a7 7 0 0 1-9 8.2z" />
-    <Path d="M9.8 6.1C12 8 15 11 19 12" />
-  </Svg>
-);
-
-const CheckIcon = ({ color = '#2E8B57' }: { color?: string }) => (
-  <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
-    <Path d="M20 6 9 17l-5-5" />
-  </Svg>
-);
 
 interface ConnectDeviceScreenProps {
   onConnected: () => void;
@@ -99,16 +61,13 @@ export function ConnectDeviceScreen({ onConnected, onSkip }: ConnectDeviceScreen
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* ─── Top Bar / Help Button (top-right) ─── */}
         <View style={styles.topBar}>
-          <Image
-            source={require('@/assets/images/title.png')}
-            style={styles.brandTitleImage}
-            contentFit="contain"
-            priority="high"
-          />
-
           <TouchableOpacity
             style={styles.helpButton}
             onPress={() =>
@@ -116,316 +75,329 @@ export function ConnectDeviceScreen({ onConnected, onSkip }: ConnectDeviceScreen
             }
             activeOpacity={0.8}
           >
-            <HelpIcon color="#E5F5EA" />
+            <HelpIcon color="#60646C" size={16} />
+            <Text style={styles.helpText}>Help</Text>
           </TouchableOpacity>
         </View>
 
-        <PulseWave color="#2E8B57" />
+        {/* ─── Brand Logo ─── */}
+        <View style={styles.brandWrapper}>
+          <BrandLogo size="xl" />
+        </View>
 
+        {/* ─── Title ─── */}
         <View style={styles.titleContainer}>
           <View style={styles.titleRow}>
-            <Text style={styles.titleText}>Connect Your Device</Text>
-            <BluetoothIcon color="#2E8B57" size={26} />
+            <Text style={[styles.titleText, { color: theme.text }]}>Connect Your Device</Text>
+            <BluetoothIcon color="#2E8B57" size={24} />
           </View>
-
-          <Text style={[styles.subtitleText, { color: '#C7D8CF' }]}>
-            {'Follow the steps below to connect your\nAgroPulse Device via Bluetooth'}
+          <Text style={[styles.subtitleText, { color: theme.textSecondary }]}>
+            Follow the steps below to connect your{'\n'}AgroPulse Device via Bluetooth
           </Text>
         </View>
 
+        {/* ─── Main Illustration ─── */}
         <View style={styles.illustrationContainer}>
-          <Image source={require('@/assets/images/stick.png')} style={styles.stickImage} contentFit="contain" />
+          <Image
+            source={require('@/assets/images/stick.png')}
+            style={styles.stickImage}
+            contentFit="contain"
+          />
         </View>
 
+        {/* ─── Steps Section ─── */}
         <View style={styles.stepsHeaderRow}>
-          <LeafIcon color="#2E8B57" />
+          <LeafIcon color="#2E8B57" size={16} />
           <Text style={styles.stepsHeaderText}>3 Simple Steps</Text>
-          <LeafIcon color="#2E8B57" />
+          <LeafIcon color="#2E8B57" size={16} />
         </View>
 
         <View style={styles.stepsContainer}>
           {STEPS.map((step) => (
-            <View key={step.number} style={styles.stepCard}>
+            <View key={step.number} style={[styles.stepCard, { backgroundColor: theme.backgroundElement }]}>
               <View style={styles.stepBadge}>
                 <Text style={styles.stepBadgeText}>{step.number}</Text>
               </View>
 
               <View style={styles.stepTextContainer}>
-                <Text style={styles.stepTitle}>{step.title}</Text>
-                <Text style={styles.stepDescription}>{step.description}</Text>
+                <Text style={[styles.stepTitle, { color: theme.text }]}>{step.title}</Text>
+                <Text style={[styles.stepDescription, { color: theme.textSecondary }]}>{step.description}</Text>
               </View>
 
               <View style={styles.stepIllustration}>
-                <Image source={step.image} style={[styles.stepImage, step.number === 3 && styles.allStepsImage]} contentFit="contain" />
+                <Image
+                  source={step.image}
+                  style={[styles.stepImage, step.number === 3 && styles.allStepsImage]}
+                  contentFit="contain"
+                />
               </View>
             </View>
           ))}
         </View>
 
+        {/* ─── Scan Button ─── */}
         <TouchableOpacity
           style={[styles.scanButton, scanning && styles.scanButtonScanning]}
           onPress={handleScan}
           activeOpacity={0.9}
           disabled={scanning}
         >
-          <BluetoothIcon color="#FFFFFF" size={22} />
-          <Text style={styles.scanButtonText}>{scanning ? 'Scanning...' : 'Scan & Connect Stick'}</Text>
+          <BluetoothIcon color="#FFFFFF" size={20} />
+          <Text style={styles.scanButtonText}>
+            {scanning ? 'Scanning...' : 'Scan & Connect Stick'}
+          </Text>
         </TouchableOpacity>
 
+        {/* ─── Footer Note ─── */}
         <View style={styles.footerNoteRow}>
           <View style={styles.checkWrap}>
-            <CheckIcon color="#2E8B57" />
+            <CheckCircleIcon color="#2E8B57" size={16} />
           </View>
-          <Text style={styles.footerNoteText}>Make sure your stick is powered on & in range</Text>
+          <Text style={[styles.footerNoteText, { color: theme.textSecondary }]}>
+            Make sure your stick is powered on & in range
+          </Text>
         </View>
 
+        {/* ─── Skip Link ─── */}
         <TouchableOpacity onPress={onSkip} style={styles.skipLink}>
           <Text style={styles.skipLinkText}>Skip for now</Text>
         </TouchableOpacity>
+        
+        {/* Bottom breathing space */}
+        <View style={{ height: 32 }} />
+
       </ScrollView>
     </SafeAreaView>
   );
 }
 
+// ─── Styles ──────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 12,
     alignItems: 'center',
-    width: '100%',
     maxWidth: MaxContentWidth,
+    width: '100%',
     alignSelf: 'center',
   },
+
+  // ── Top Bar / Help ──
   topBar: {
     width: '100%',
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    justifyContent: 'flex-end',
     paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 0,
-  },
-  logoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  brandTitleImage: {
-    width: 116,
-    height: 31,
-  },
-  brandAgro: {
-    fontSize: 32,
-    fontWeight: '900',
-    color: '#F16B1C',
-  },
-  brandPulse: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: '#2E8B57',
-    fontStyle: 'italic',
-    marginLeft: 2,
+    paddingTop: Platform.OS === 'web' ? 12 : 6,
+    paddingBottom: 4,
   },
   helpButton: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: '#315E4A',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#315E4A',
-  },
-  pulseContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    width: '70%',
-    height: 1,
-    marginTop: 5,
-    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#D4D5DA',
+    borderRadius: 18,
+    paddingVertical: 5,
+    paddingHorizontal: 12,
+    backgroundColor: '#FFFFFF',
+    gap: 6,
   },
-  pulseLine: {
-    flex: 1,
-    height: 1,
+  helpText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#333333',
   },
-  titleContainer: {
+
+  // ── Brand ──
+  brandWrapper: {
+    marginTop: 2,
+    marginBottom: 12,
     width: '100%',
     alignItems: 'center',
-    paddingHorizontal: Spacing.three,
-    marginTop: 0,
+  },
+
+  // ── Title ──
+  titleContainer: {
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingHorizontal: 20,
   },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 0,
+    marginBottom: 6,
     gap: 8,
   },
   titleText: {
-    fontSize: 21,
+    fontSize: 24,
     fontWeight: '800',
-    color: '#194C2D',
     textAlign: 'center',
+    letterSpacing: 0.2,
   },
   subtitleText: {
-    fontSize: 12,
+    fontSize: 14,
     textAlign: 'center',
-    lineHeight: 16,
+    lineHeight: 20,
     fontWeight: '500',
-    color: '#111111',
   },
+
+  // ── Main Illustration ──
   illustrationContainer: {
     width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 4,
-    marginBottom: 3,
+    marginBottom: 20,
   },
   stickImage: {
-    width: 190,
-    height: 118,
+    width: 380,
+    height: 228,
   },
+
+  // ── Steps Header ──
   stepsHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    marginBottom: 7,
+    marginBottom: 12,
   },
   stepsHeaderText: {
-    fontSize: 14,
-    color: '#194C2D',
+    fontSize: 15,
+    color: '#1B3C18',
     fontWeight: '800',
   },
+
+  // ── Steps List ──
   stepsContainer: {
-    width: '94%',
-    gap: 5,
+    width: '92%',
+    gap: 8,
+    marginBottom: 24,
   },
   stepCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#A6B5A8',
-    borderRadius: 9,
-    paddingVertical: 5,
-    paddingHorizontal: 5,
-    gap: 7,
+    borderColor: '#D4D5DA',
+    borderRadius: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    gap: 12,
   },
   stepBadge: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     backgroundColor: '#E7F4E8',
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
   },
   stepBadgeText: {
-    color: '#27824A',
-    fontSize: 11,
+    color: '#2E8B57',
+    fontSize: 12,
     fontWeight: '800',
   },
   stepTextContainer: {
     flex: 1,
   },
   stepTitle: {
-    fontSize: 11,
-    color: '#111111',
+    fontSize: 14,
     fontWeight: '700',
     marginBottom: 2,
   },
   stepDescription: {
-    fontSize: 8,
-    color: '#777777',
-    lineHeight: 10,
-    fontWeight: '400',
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: '500',
   },
   stepIllustration: {
-    width: 38,
-    height: 38,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
   },
   stepImage: {
-    width: 38,
-    height: 38,
+    width: 44,
+    height: 44,
   },
   allStepsImage: {
-    width: 114,
-    transform: [{ translateX: -38 }],
+    width: 132,
+    transform: [{ translateX: -44 }],
   },
+
+  // ── Scan Button ──
   scanButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    width: '94%',
-    backgroundColor: '#194C2D',
-    borderRadius: 18,
-    paddingVertical: 10,
-    marginTop: Spacing.three,
-    marginBottom: Spacing.two,
+    gap: 10,
+    width: '92%',
+    backgroundColor: '#1B3C18',
+    borderRadius: 22,
+    paddingVertical: 14,
+    marginBottom: 16,
     ...Platform.select({
       ios: {
-        shadowColor: '#2E8B57',
+        shadowColor: '#1B3C18',
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.25,
+        shadowOpacity: 0.2,
         shadowRadius: 12,
       },
-      android: { elevation: 4 },
+      android: { elevation: 6 },
       web: {
-        shadowColor: '#2E8B57',
+        shadowColor: '#1B3C18',
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.22,
+        shadowOpacity: 0.15,
         shadowRadius: 12,
       },
     }),
   },
   scanButtonScanning: {
-    backgroundColor: '#3AA96B',
+    backgroundColor: '#2E8B57',
   },
   scanButtonText: {
     color: '#FFFFFF',
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: '700',
+    letterSpacing: 0.2,
   },
+
+  // ── Footer Note ──
   footerNoteRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    marginBottom: Spacing.one,
-    paddingHorizontal: Spacing.three,
+    gap: 6,
+    marginBottom: 16,
+    paddingHorizontal: 20,
   },
   checkWrap: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#E6F4E8',
+    backgroundColor: '#E7F4E8',
   },
   footerNoteText: {
-    color: '#333333',
-    fontSize: 8,
-    textAlign: 'center',
+    fontSize: 11,
     fontWeight: '600',
   },
+
+  // ── Skip Link ──
   skipLink: {
-    paddingVertical: Spacing.one,
-    paddingHorizontal: Spacing.two,
-    marginBottom: Spacing.two,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
   },
   skipLinkText: {
-    color: '#777777',
-    fontSize: 10,
-    textAlign: 'center',
+    color: '#60646C',
+    fontSize: 13,
+    fontWeight: '600',
     textDecorationLine: 'underline',
   },
 });

@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useAuthFlow } from '@/features/auth/hooks/useAuthFlow';
 import { LoginScreen, OtpScreen, RegisterScreen } from '@/features/auth/screens';
 import { ConnectDeviceScreen, FieldSetupScreen } from '@/features/onboarding/screens';
-import AppTabs from '@/components/app-tabs';
+import { HomeScreen } from '@/components/home-screen';
 
 export function AuthFlow() {
   const {
@@ -67,7 +67,7 @@ export function AuthFlow() {
       return <FieldSetupScreen onContinue={handleFieldSetupComplete} />;
     }
 
-    return <AppTabs />;
+    return <HomeScreen />;
   };
 
   return <>{renderScreen()}</>;

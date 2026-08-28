@@ -10,13 +10,14 @@ import { Image } from 'expo-image';
 import Svg, { Path } from 'react-native-svg';
 
 interface BrandLogoProps {
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
 const SIZE_MAP = {
   sm: { width: 120, height: 32, wave: { width: 40, height: 16 } },
   md: { width: 145, height: 38, wave: { width: 50, height: 20 } },
   lg: { width: 170, height: 46, wave: { width: 50, height: 20 } },
+  xl: { width: 240, height: 64, wave: { width: 65, height: 24 } },
 };
 
 export function BrandLogo({ size = 'lg' }: BrandLogoProps) {
@@ -30,7 +31,6 @@ export function BrandLogo({ size = 'lg' }: BrandLogoProps) {
         contentFit="contain"
         priority="high"
       />
-      <PulseWave waveWidth={s.wave.width} waveHeight={s.wave.height} />
     </View>
   );
 }

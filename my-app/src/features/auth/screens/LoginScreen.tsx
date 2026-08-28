@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
   ScrollView, Platform, KeyboardAvoidingView, SafeAreaView,
-  Modal, Alert,
+  Modal, Alert, Dimensions,
 } from 'react-native';
 import { BrandLogo } from '@/components/brand/BrandLogo';
 import { FarmerMascot } from '@/components/brand/FarmerMascot';
@@ -20,6 +20,8 @@ interface LoginScreenProps {
 }
 
 type LoginMethod = 'phone' | 'email' | 'google' | null;
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export function LoginScreen({ onLogin, onPhoneLoginRequested, onRegisterRequested }: LoginScreenProps) {
   const theme = useTheme();
@@ -82,97 +84,163 @@ export function LoginScreen({ onLogin, onPhoneLoginRequested, onRegisterRequeste
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flex}>
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
 
-          {/* Language Selector */}
+          {/* ─── Language Selector (top-right) ─── */}
           <View style={styles.topBar}>
             <TouchableOpacity style={styles.langSelector} onPress={() => setLangModalVisible(true)}>
-              <GlobeIcon color="#60646C" />
+              <GlobeIcon color="#60646C" size={13} />
               <Text style={styles.langText}>{selectedLanguage}</Text>
               <Text style={styles.dropdownArrow}>▼</Text>
             </TouchableOpacity>
           </View>
 
-          {/* Brand */}
+          {/* ─── Brand Logo ─── */}
           <View style={styles.brandWrapper}>
-            <BrandLogo size="lg" />
+            <BrandLogo size="xl" />
           </View>
 
-          {/* Welcome */}
+          {/* ─── Welcome Text ─── */}
           <View style={styles.welcomeContainer}>
             <Text style={[styles.welcomeHello, { color: theme.text }]}>Hello,</Text>
             <View style={styles.welcomeSubRow}>
-              <Text style={[styles.welcomeSubtext, { color: theme.textSecondary }]}>Welcome to एग्रो Pulse</Text>
-              <Text style={styles.welcomeLeaf}>🍃</Text>
+              <Text style={[styles.welcomeSubtext, { color: theme.textSecondary }]}>
+                Welcome to एग्रो Pulse
+              </Text>
+              <Text style={styles.welcomeLeaf}> 🍃</Text>
             </View>
           </View>
 
-          {/* Mascot */}
+          {/* ─── Farmer Mascot ─── */}
           <View style={styles.mascotWrapper}>
-            <FarmerMascot />
+            <FarmerMascot height={260} width={360} />
           </View>
 
-          {/* Card */}
+          {/* ─── Login Card ─── */}
           <View style={[styles.card, { backgroundColor: theme.backgroundElement }]}>
+
+            {/* Card Header */}
             <View style={styles.cardHeader}>
-              <LeafIcon color="#2E8B57" />
+              <LeafIcon color="#2E8B57" size={16} />
               <Text style={styles.cardTitle}>Login to continue</Text>
-              <LeafIcon color="#2E8B57" />
+              <LeafIcon color="#2E8B57" size={16} />
             </View>
 
-            <TouchableOpacity style={styles.googleButton} onPress={() => setLoginMethod('google')} activeOpacity={0.9}>
-              <View style={styles.googleIconWrapper}><GoogleIcon /></View>
+            {/* Continue With Google */}
+            <TouchableOpacity
+              style={styles.googleButton}
+              onPress={() => setLoginMethod('google')}
+              activeOpacity={0.9}
+            >
+              <View style={styles.googleIconWrapper}>
+                <GoogleIcon />
+              </View>
               <Text style={styles.googleButtonText}>Continue With Google</Text>
             </TouchableOpacity>
 
+            {/* ── or ── */}
             <View style={styles.separatorRow}>
               <View style={styles.separatorLine} />
               <Text style={styles.separatorText}>or</Text>
               <View style={styles.separatorLine} />
             </View>
 
+            {/* Login with Phone / Email */}
             <View style={styles.alternativeLoginsRow}>
-              <TouchableOpacity style={styles.altLoginButton} onPress={() => setLoginMethod('phone')} activeOpacity={0.8}>
-                <PhoneIcon color="#1B3C18" />
-                <Text style={styles.altLoginButtonText}>Login with Phone</Text>
+              <TouchableOpacity
+                style={styles.altLoginButton}
+                onPress={() => setLoginMethod('phone')}
+                activeOpacity={0.8}
+              >
+                <PhoneIcon color="#1B3C18" size={14} />
+                <Text style={styles.altLoginButtonText}>Login with{'\n'}Phone</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.altLoginButton} onPress={() => setLoginMethod('email')} activeOpacity={0.8}>
-                <EmailIcon color="#1B3C18" />
-                <Text style={styles.altLoginButtonText}>Login with Email</Text>
+              <TouchableOpacity
+                style={styles.altLoginButton}
+                onPress={() => setLoginMethod('email')}
+                activeOpacity={0.8}
+              >
+                <EmailIcon color="#1B3C18" size={14} />
+                <Text style={styles.altLoginButtonText}>Login with{'\n'}Email</Text>
               </TouchableOpacity>
             </View>
 
+            {/* ── or ── */}
             <View style={styles.separatorRow}>
               <View style={styles.separatorLine} />
               <Text style={styles.separatorText}>or</Text>
               <View style={styles.separatorLine} />
             </View>
 
+            {/* Manual Login Form */}
             <View style={styles.formContainer}>
+
+              {/* Email / Phone Input */}
               <View style={styles.inputContainer}>
-                <View style={styles.inputIconWrapper}><UserIcon color="#60646C" /></View>
+                <View style={styles.inputIconWrapper}>
+                  <UserIcon color="#60646C" size={16} />
+                </View>
                 <View style={styles.verticalDivider} />
-                <TextInput style={styles.textInput} placeholder="Email or Phone Number" placeholderTextColor="#B0B4BA" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" autoCorrect={false} />
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Email or Phone Number"
+                  placeholderTextColor="#B0B4BA"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
               </View>
 
+              {/* Password Input */}
               <View style={styles.inputContainer}>
-                <View style={styles.inputIconWrapper}><LockIcon color="#60646C" /></View>
+                <View style={styles.inputIconWrapper}>
+                  <LockIcon color="#60646C" size={16} />
+                </View>
                 <View style={styles.verticalDivider} />
-                <TextInput style={styles.textInput} placeholder="Password" placeholderTextColor="#B0B4BA" value={password} onChangeText={setPassword} secureTextEntry={!showPassword} autoCapitalize="none" autoCorrect={false} />
-                <TouchableOpacity style={styles.eyeButton} onPress={() => setShowPassword(!showPassword)} activeOpacity={0.7}>
-                  {showPassword ? <EyeOffIcon color="#60646C" /> : <EyeIcon color="#60646C" />}
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Password"
+                  placeholderTextColor="#B0B4BA"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+                <TouchableOpacity
+                  style={styles.eyeButton}
+                  onPress={() => setShowPassword(!showPassword)}
+                  activeOpacity={0.7}
+                >
+                  {showPassword ? <EyeOffIcon color="#60646C" size={16} /> : <EyeIcon color="#60646C" size={16} />}
                 </TouchableOpacity>
               </View>
 
-              <TouchableOpacity onPress={() => Alert.alert('Forgot Password', 'Password recovery will be available soon.')} style={styles.forgotPasswordContainer}>
+              {/* Forgot Password */}
+              <TouchableOpacity
+                onPress={() => Alert.alert('Forgot Password', 'Password recovery will be available soon.')}
+                style={styles.forgotPasswordContainer}
+              >
                 <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.loginButton} onPress={handleManualLogin} activeOpacity={0.9}>
+              {/* Login Button */}
+              <TouchableOpacity
+                style={styles.loginButton}
+                onPress={handleManualLogin}
+                activeOpacity={0.9}
+              >
                 <Text style={styles.loginButtonText}>Login</Text>
               </TouchableOpacity>
             </View>
 
+            {/* Register Link */}
             <View style={styles.registerBackLinkRow}>
               <Text style={styles.dontHaveText}>Don't have an account? </Text>
               <TouchableOpacity onPress={onRegisterRequested}>
@@ -180,10 +248,14 @@ export function LoginScreen({ onLogin, onPhoneLoginRequested, onRegisterRequeste
               </TouchableOpacity>
             </View>
           </View>
+
+          {/* Bottom breathing space */}
+          <View style={{ height: 32 }} />
+
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* Language Modal */}
+      {/* ─── Language Modal ─── */}
       <Modal visible={langModalVisible} transparent animationType="fade" onRequestClose={() => setLangModalVisible(false)}>
         <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setLangModalVisible(false)}>
           <View style={[styles.modalContent, { backgroundColor: theme.backgroundSelected }]}>
@@ -198,6 +270,7 @@ export function LoginScreen({ onLogin, onPhoneLoginRequested, onRegisterRequeste
         </TouchableOpacity>
       </Modal>
 
+      {/* ─── Method Modal (Phone/Email/Google) ─── */}
       <Modal visible={loginMethod !== null} transparent animationType="fade" onRequestClose={() => setLoginMethod(null)}>
         <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setLoginMethod(null)}>
           <TouchableOpacity style={[styles.loginMethodModal, { backgroundColor: theme.backgroundElement }]} activeOpacity={1}>
@@ -234,58 +307,364 @@ export function LoginScreen({ onLogin, onPhoneLoginRequested, onRegisterRequeste
   );
 }
 
+// ─── Styles ──────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
-  safeArea: { flex: 1 },
-  flex: { flex: 1 },
-  scrollContent: { flexGrow: 1, paddingBottom: Spacing.four, alignItems: 'center', maxWidth: MaxContentWidth, width: '100%', alignSelf: 'center' },
-  topBar: { width: '100%', flexDirection: 'row', justifyContent: 'flex-end', paddingHorizontal: Spacing.three, paddingVertical: Spacing.two },
-  langSelector: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#E0E1E6', borderRadius: 20, paddingVertical: 4, paddingHorizontal: 12, backgroundColor: '#FFFFFF' },
-  langText: { fontSize: 12, fontWeight: '700', color: '#333333', marginHorizontal: 6 },
-  dropdownArrow: { fontSize: 8, color: '#60646C' },
-  brandWrapper: { marginBottom: Spacing.two, width: '100%', alignItems: 'center' },
-  welcomeContainer: { alignItems: 'center', marginBottom: Spacing.two },
-  welcomeHello: { fontSize: 24, fontWeight: '800' },
-  welcomeSubRow: { flexDirection: 'row', alignItems: 'center', marginTop: 2 },
-  welcomeSubtext: { fontSize: 16, fontWeight: '600' },
-  welcomeLeaf: { fontSize: 18, marginLeft: 6 },
-  mascotWrapper: { marginBottom: Spacing.three },
-  card: { width: '94%', borderRadius: 24, paddingHorizontal: Spacing.three, paddingTop: Spacing.three, paddingBottom: Spacing.four, ...Platform.select({ ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.12, shadowRadius: 16 }, android: { elevation: 8 }, web: { shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.08, shadowRadius: 20 } }) },
-  cardHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: Spacing.three, gap: 8 },
-  cardTitle: { fontSize: 18, fontWeight: '700', color: '#1B3C18' },
-  googleButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#1B3C18', borderRadius: 24, paddingVertical: 12, width: '100%', marginBottom: Spacing.two },
-  googleIconWrapper: { backgroundColor: '#FFFFFF', borderRadius: 14, padding: 4, position: 'absolute', left: 14 },
-  googleButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
-  separatorRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginVertical: Spacing.two, width: '100%' },
-  separatorLine: { flex: 1, height: 1, backgroundColor: '#E0E1E6' },
-  separatorText: { fontSize: 13, color: '#60646C', marginHorizontal: 12, fontWeight: '600' },
-  alternativeLoginsRow: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', gap: 8 },
-  altLoginButton: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#E0E1E6', borderRadius: 16, paddingVertical: 10, backgroundColor: '#FFFFFF', gap: 6 },
-  altLoginButtonText: { color: '#1B3C18', fontSize: 12, fontWeight: '700' },
-  formContainer: { width: '100%', gap: Spacing.two },
-  inputContainer: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#E0E1E6', borderRadius: 20, backgroundColor: '#FFFFFF', paddingHorizontal: 12, height: 46, width: '100%' },
-  inputIconWrapper: { width: 24, alignItems: 'center', justifyContent: 'center' },
-  verticalDivider: { width: 1, height: 18, backgroundColor: '#E0E1E6', marginHorizontal: 10 },
-  textInput: { flex: 1, fontSize: 14, color: '#333333', height: '100%' },
-  eyeButton: { padding: 6 },
-  forgotPasswordContainer: { alignSelf: 'flex-end', marginTop: 2, marginBottom: Spacing.two },
-  forgotPasswordText: { color: '#2E8B57', fontSize: 13, fontWeight: '700' },
-  loginButton: { backgroundColor: '#1B3C18', borderRadius: 24, paddingVertical: 12, alignItems: 'center', justifyContent: 'center', width: '100%', marginTop: Spacing.one },
-  loginButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
-  registerBackLinkRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: Spacing.three },
-  dontHaveText: { fontSize: 14, color: '#60646C', fontWeight: '600' },
-  registerLinkText: { color: '#2E8B57', fontSize: 14, fontWeight: '700' },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' },
-  modalContent: { width: '80%', borderRadius: 20, padding: Spacing.three, alignItems: 'center' },
-  loginMethodModal: { width: '88%', borderRadius: 20, padding: Spacing.three },
-  modalTitle: { fontSize: 18, fontWeight: '700', marginBottom: Spacing.three },
-  modalDescription: { fontSize: 14, lineHeight: 20, marginBottom: Spacing.two },
-  methodInput: { borderWidth: 1, borderColor: '#E0E1E6', borderRadius: 12, backgroundColor: '#FFFFFF', color: '#333333', paddingHorizontal: 14, height: 46, marginBottom: Spacing.two },
-  methodPasswordRow: { position: 'relative' },
-  methodPasswordInput: { paddingRight: 48, width: '100%' },
-  methodEyeButton: { position: 'absolute', right: 8, top: 5, padding: 6 },
-  methodContinueButton: { backgroundColor: '#1B3C18', borderRadius: 24, paddingVertical: 12, alignItems: 'center', justifyContent: 'center', marginTop: Spacing.one },
-  modalItem: { width: '100%', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(0,0,0,0.05)', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  modalItemText: { fontSize: 15 },
-  modalItemActiveText: { fontWeight: '700', color: '#2E8B57' },
-  checkmark: { color: '#2E8B57', fontWeight: '800', fontSize: 16 },
+  safeArea: {
+    flex: 1,
+  },
+  flex: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    alignItems: 'center',
+    maxWidth: MaxContentWidth,
+    width: '100%',
+    alignSelf: 'center',
+  },
+
+  // ── Top bar / Language ──
+  topBar: {
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingHorizontal: 16,
+    paddingTop: Platform.OS === 'web' ? 12 : 6,
+    paddingBottom: 4,
+  },
+  langSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#D4D5DA',
+    borderRadius: 18,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    backgroundColor: '#FFFFFF',
+    gap: 4,
+  },
+  langText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#333333',
+  },
+  dropdownArrow: {
+    fontSize: 7,
+    color: '#60646C',
+    marginLeft: 2,
+  },
+
+  // ── Brand ──
+  brandWrapper: {
+    marginTop: 2,
+    marginBottom: 6,
+    width: '100%',
+    alignItems: 'center',
+  },
+
+  // ── Welcome ──
+  welcomeContainer: {
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  welcomeHello: {
+    fontSize: 26,
+    fontWeight: '800',
+    letterSpacing: 0.2,
+  },
+  welcomeSubRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  welcomeSubtext: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  welcomeLeaf: {
+    fontSize: 16,
+  },
+
+  // ── Mascot ──
+  mascotWrapper: {
+    marginBottom: 12,
+  },
+
+  // ── Card ──
+  card: {
+    width: '92%',
+    borderRadius: 22,
+    paddingHorizontal: 18,
+    paddingTop: 18,
+    paddingBottom: 22,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.10,
+        shadowRadius: 14,
+      },
+      android: {
+        elevation: 6,
+      },
+      web: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.08,
+        shadowRadius: 18,
+      },
+    }),
+  },
+
+  // ── Card Header ──
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 14,
+    gap: 6,
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1B3C18',
+  },
+
+  // ── Google Button ──
+  googleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#1B3C18',
+    borderRadius: 22,
+    paddingVertical: 11,
+    width: '100%',
+    marginBottom: 6,
+  },
+  googleIconWrapper: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 3,
+    position: 'absolute',
+    left: 12,
+  },
+  googleButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
+    letterSpacing: 0.1,
+  },
+
+  // ── Separator ──
+  separatorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 8,
+    width: '100%',
+  },
+  separatorLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#E0E1E6',
+  },
+  separatorText: {
+    fontSize: 13,
+    color: '#888C94',
+    marginHorizontal: 12,
+    fontWeight: '500',
+  },
+
+  // ── Alt Login Buttons ──
+  alternativeLoginsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    gap: 10,
+  },
+  altLoginButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#D4D5DA',
+    borderRadius: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 6,
+    backgroundColor: '#FFFFFF',
+    gap: 6,
+  },
+  altLoginButtonText: {
+    color: '#1B3C18',
+    fontSize: 11,
+    fontWeight: '700',
+    textAlign: 'center',
+    lineHeight: 15,
+  },
+
+  // ── Form ──
+  formContainer: {
+    width: '100%',
+    gap: 8,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#D4D5DA',
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 12,
+    height: 44,
+    width: '100%',
+  },
+  inputIconWrapper: {
+    width: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  verticalDivider: {
+    width: 1,
+    height: 16,
+    backgroundColor: '#D4D5DA',
+    marginHorizontal: 8,
+  },
+  textInput: {
+    flex: 1,
+    fontSize: 13,
+    color: '#333333',
+    height: '100%',
+  },
+  eyeButton: {
+    padding: 5,
+  },
+
+  // ── Forgot Password ──
+  forgotPasswordContainer: {
+    alignSelf: 'flex-end',
+    marginTop: 0,
+    marginBottom: 2,
+  },
+  forgotPasswordText: {
+    color: '#2E8B57',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+
+  // ── Login Button ──
+  loginButton: {
+    backgroundColor: '#1B3C18',
+    borderRadius: 22,
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+  },
+  loginButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
+
+  // ── Register Link ──
+  registerBackLinkRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 14,
+  },
+  dontHaveText: {
+    fontSize: 13,
+    color: '#60646C',
+    fontWeight: '600',
+  },
+  registerLinkText: {
+    color: '#2E8B57',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+
+  // ── Modals ──
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '80%',
+    borderRadius: 20,
+    padding: Spacing.three,
+    alignItems: 'center',
+  },
+  loginMethodModal: {
+    width: '88%',
+    borderRadius: 20,
+    padding: Spacing.three,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: Spacing.three,
+  },
+  modalDescription: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: Spacing.two,
+  },
+  methodInput: {
+    borderWidth: 1,
+    borderColor: '#E0E1E6',
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    color: '#333333',
+    paddingHorizontal: 14,
+    height: 46,
+    marginBottom: Spacing.two,
+  },
+  methodPasswordRow: {
+    position: 'relative',
+  },
+  methodPasswordInput: {
+    paddingRight: 48,
+    width: '100%',
+  },
+  methodEyeButton: {
+    position: 'absolute',
+    right: 8,
+    top: 5,
+    padding: 6,
+  },
+  methodContinueButton: {
+    backgroundColor: '#1B3C18',
+    borderRadius: 24,
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: Spacing.one,
+  },
+  modalItem: {
+    width: '100%',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.05)',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  modalItemText: {
+    fontSize: 15,
+  },
+  modalItemActiveText: {
+    fontWeight: '700',
+    color: '#2E8B57',
+  },
+  checkmark: {
+    color: '#2E8B57',
+    fontWeight: '800',
+    fontSize: 16,
+  },
 });

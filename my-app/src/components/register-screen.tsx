@@ -1,74 +1,18 @@
 import React, { useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
-  Platform,
-  KeyboardAvoidingView,
-  SafeAreaView,
+  View, Text, StyleSheet, TextInput, TouchableOpacity,
+  ScrollView, Platform, KeyboardAvoidingView, SafeAreaView,
   Alert,
 } from 'react-native';
-import { Image } from 'expo-image';
-import Svg, { Path, Circle, Rect, Line } from 'react-native-svg';
+import Svg, { Path } from 'react-native-svg';
+import { BrandLogo } from '@/components/brand/BrandLogo';
+import { FarmerMascot } from '@/components/brand/FarmerMascot';
+import {
+  UserIcon, EmailIcon, LockIcon,
+  EyeIcon, EyeOffIcon,
+} from '@/components/brand/SvgIcons';
 import { useTheme } from '@/hooks/use-theme';
-import { Colors, Spacing, MaxContentWidth } from '@/constants/theme';
-
-// --- Custom SVGs ---
-
-const UserIcon = ({ color = '#60646C' }: { color?: string }) => (
-  <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-    <Path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-    <Circle cx="12" cy="7" r="4" />
-  </Svg>
-);
-
-const EmailIcon = ({ color = '#60646C' }: { color?: string }) => (
-  <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-    <Path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-    <Path d="m22 6-10 7L2 6" />
-  </Svg>
-);
-
-const LockIcon = ({ color = '#60646C' }: { color?: string }) => (
-  <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-    <Rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-    <Path d="M7 11V7a5 5 0 0 1 10 0v4" />
-  </Svg>
-);
-
-const EyeIcon = ({ color = '#60646C' }: { color?: string }) => (
-  <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-    <Path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-    <Circle cx="12" cy="12" r="3" />
-  </Svg>
-);
-
-const EyeOffIcon = ({ color = '#60646C' }: { color?: string }) => (
-  <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-    <Path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-    <Line x1="1" y1="1" x2="23" y2="23" />
-  </Svg>
-);
-
-const PulseWave = ({ color = '#1F5A2A' }: { color?: string }) => (
-  <View style={styles.pulseContainer}>
-    <View style={[styles.pulseLine, { backgroundColor: color + '40' }]} />
-    <Svg width={50} height={20} viewBox="0 0 50 20" style={styles.pulseSvg}>
-      <Path
-        d="M0 10 H15 L18 2 L22 18 L26 7 L29 13 L32 10 H50"
-        fill="none"
-        stroke={color}
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-    <View style={[styles.pulseLine, { backgroundColor: color + '40' }]} />
-  </View>
-);
+import { Spacing, MaxContentWidth } from '@/constants/theme';
 
 // --- Component Props ---
 interface RegisterScreenProps {
@@ -78,12 +22,12 @@ interface RegisterScreenProps {
 
 export function RegisterScreen({ onRegisterSuccess, onBackToLogin }: RegisterScreenProps) {
   const theme = useTheme();
-  
+
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
@@ -92,11 +36,11 @@ export function RegisterScreen({ onRegisterSuccess, onBackToLogin }: RegisterScr
   const getPasswordStrength = (pass: string) => {
     if (!pass) return { score: 0, label: '', color: '#DDD' };
     if (pass.length < 6) return { score: 1, label: 'Weak', color: '#EA4335' };
-    
+
     const hasNumbers = /\d/.test(pass);
     const hasUppercase = /[A-Z]/.test(pass);
     const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(pass);
-    
+
     // Strong if length >= 8, has numbers, and uppercase or special chars
     if (pass.length >= 8 && hasNumbers && (hasUppercase || hasSpecial)) {
       return { score: 3, label: 'Strong', color: '#34A853' };
@@ -135,54 +79,42 @@ export function RegisterScreen({ onRegisterSuccess, onBackToLogin }: RegisterScr
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardAvoidingView}
+        style={styles.flex}
       >
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Top spacer */}
-          <View style={styles.topSpacer} />
 
-          {/* Branding Logo Section */}
-          <View style={styles.logoContainer}>
-            <Image
-              source={require('@/assets/images/title.png')}
-              style={styles.brandTitleImage}
-              contentFit="contain"
-              priority="high"
-            />
-            <PulseWave color="#2E8B57" />
+          {/* ─── Brand Logo ─── */}
+          <View style={styles.brandWrapper}>
+            <BrandLogo size="xl" />
           </View>
 
-          {/* Welcome/Register Title */}
+          {/* ─── Title ─── */}
           <View style={styles.titleContainer}>
-            <Text style={styles.titleText}>Create your account</Text>
+            <Text style={[styles.titleText, { color: theme.text }]}>Create your account</Text>
             <Text style={[styles.subtitleText, { color: theme.textSecondary }]}>
               Let's get started 🍃
             </Text>
           </View>
 
-          {/* Farmer Mascot Image */}
-          <View style={styles.mascotContainer}>
-            <Image
-              source={require('@/assets/images/farmericon.png')}
-              style={styles.mascotImage}
-              contentFit="contain"
-              priority="high"
-            />
+          {/* ─── Farmer Mascot ─── */}
+          <View style={styles.mascotWrapper}>
+            <FarmerMascot height={260} width={360} />
           </View>
 
-          {/* Register Option Card */}
+          {/* ─── Register Card ─── */}
           <View style={[styles.card, { backgroundColor: theme.backgroundElement }]}>
-            
+
             {/* Input Form */}
             <View style={styles.formContainer}>
+
               {/* Full Name Input */}
               <View style={styles.inputContainer}>
                 <View style={styles.inputIconWrapper}>
-                  <UserIcon color="#60646C" />
+                  <UserIcon color="#60646C" size={16} />
                 </View>
                 <View style={styles.verticalDivider} />
                 <TextInput
@@ -199,7 +131,7 @@ export function RegisterScreen({ onRegisterSuccess, onBackToLogin }: RegisterScr
               {/* Email Address Input */}
               <View style={styles.inputContainer}>
                 <View style={styles.inputIconWrapper}>
-                  <EmailIcon color="#60646C" />
+                  <EmailIcon color="#60646C" size={16} />
                 </View>
                 <View style={styles.verticalDivider} />
                 <TextInput
@@ -217,7 +149,7 @@ export function RegisterScreen({ onRegisterSuccess, onBackToLogin }: RegisterScr
               {/* Password Input */}
               <View style={styles.inputContainer}>
                 <View style={styles.inputIconWrapper}>
-                  <LockIcon color="#60646C" />
+                  <LockIcon color="#60646C" size={16} />
                 </View>
                 <View style={styles.verticalDivider} />
                 <TextInput
@@ -235,14 +167,14 @@ export function RegisterScreen({ onRegisterSuccess, onBackToLogin }: RegisterScr
                   onPress={() => setShowPassword(!showPassword)}
                   activeOpacity={0.7}
                 >
-                  {showPassword ? <EyeOffIcon color="#60646C" /> : <EyeIcon color="#60646C" />}
+                  {showPassword ? <EyeOffIcon color="#60646C" size={16} /> : <EyeIcon color="#60646C" size={16} />}
                 </TouchableOpacity>
               </View>
 
               {/* Confirm Password Input */}
               <View style={styles.inputContainer}>
                 <View style={styles.inputIconWrapper}>
-                  <LockIcon color="#60646C" />
+                  <LockIcon color="#60646C" size={16} />
                 </View>
                 <View style={styles.verticalDivider} />
                 <TextInput
@@ -260,7 +192,7 @@ export function RegisterScreen({ onRegisterSuccess, onBackToLogin }: RegisterScr
                   onPress={() => setShowConfirmPassword(!showConfirmPassword)}
                   activeOpacity={0.7}
                 >
-                  {showConfirmPassword ? <EyeOffIcon color="#60646C" /> : <EyeIcon color="#60646C" />}
+                  {showConfirmPassword ? <EyeOffIcon color="#60646C" size={16} /> : <EyeIcon color="#60646C" size={16} />}
                 </TouchableOpacity>
               </View>
 
@@ -361,162 +293,133 @@ export function RegisterScreen({ onRegisterSuccess, onBackToLogin }: RegisterScr
               </TouchableOpacity>
             </View>
           </View>
+
+          {/* Bottom breathing space */}
+          <View style={{ height: 32 }} />
+
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
+// ─── Styles ──────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
-  keyboardAvoidingView: {
+  flex: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: Spacing.four,
     alignItems: 'center',
+    maxWidth: MaxContentWidth,
     width: '100%',
     alignSelf: 'center',
-    maxWidth: MaxContentWidth,
   },
-  topSpacer: {
-    height: Spacing.four,
-  },
-  logoContainer: {
-    alignItems: 'center',
-    marginBottom: Spacing.two,
+
+  // ── Brand ──
+  brandWrapper: {
+    marginTop: Platform.OS === 'web' ? 16 : 8,
+    marginBottom: 6,
     width: '100%',
-  },
-  brandTitleRow: {
-    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
   },
-  brandAgro: {
-    fontSize: 36,
-    fontWeight: '900',
-    color: '#E65A00',
-    marginRight: 4,
-  },
-  brandPulse: {
-    fontSize: 36,
-    fontWeight: '800',
-    color: '#2E8B57',
-    fontStyle: 'italic',
-  },
-  pulseContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '60%',
-    height: 20,
-  },
-  pulseLine: {
-    flex: 1,
-    height: 2,
-  },
-  pulseSvg: {
-    marginHorizontal: 2,
-  },
+
+  // ── Title ──
   titleContainer: {
     alignItems: 'center',
-    marginBottom: Spacing.two,
+    marginBottom: 8,
   },
   titleText: {
-    fontSize: 30,
+    fontSize: 26,
     fontWeight: '800',
-    color: '#1B3C18',
     textAlign: 'center',
-    marginBottom: 4,
+    letterSpacing: 0.2,
+    marginBottom: 2,
   },
   subtitleText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
     textAlign: 'center',
   },
-  brandTitleImage: {
-    width: 170,
-    height: 46,
-    marginBottom: 4,
+
+  // ── Mascot ──
+  mascotWrapper: {
+    marginBottom: 12,
   },
-  mascotContainer: {
-    width: '100%',
-    height: 180,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.three,
-  },
-  mascotImage: {
-    width: 260,
-    height: 180,
-  },
+
+  // ── Card ──
   card: {
-    width: '94%',
-    borderRadius: 24,
-    paddingHorizontal: Spacing.three,
-    paddingTop: Spacing.four,
-    paddingBottom: Spacing.four,
+    width: '92%',
+    borderRadius: 22,
+    paddingHorizontal: 18,
+    paddingTop: 18,
+    paddingBottom: 22,
     ...Platform.select({
       ios: {
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.12,
-        shadowRadius: 16,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.10,
+        shadowRadius: 14,
       },
       android: {
-        elevation: 8,
+        elevation: 6,
       },
       web: {
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 6 },
+        shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.08,
-        shadowRadius: 20,
+        shadowRadius: 18,
       },
     }),
   },
+
+  // ── Form ──
   formContainer: {
     width: '100%',
-    gap: Spacing.two,
+    gap: 8,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E0E1E6',
+    borderColor: '#D4D5DA',
     borderRadius: 20,
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 12,
-    height: 46,
+    height: 44,
     width: '100%',
   },
   inputIconWrapper: {
-    width: 24,
+    width: 22,
     alignItems: 'center',
     justifyContent: 'center',
   },
   verticalDivider: {
     width: 1,
-    height: 18,
-    backgroundColor: '#E0E1E6',
-    marginHorizontal: 10,
+    height: 16,
+    backgroundColor: '#D4D5DA',
+    marginHorizontal: 8,
   },
   textInput: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 13,
     color: '#333333',
     height: '100%',
   },
   eyeButton: {
-    padding: 6,
+    padding: 5,
   },
+
+  // ── Strength Meter ──
   strengthMeterRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
-    marginVertical: 4,
+    marginVertical: 2,
     gap: 8,
   },
   strengthColumn: {
@@ -527,28 +430,30 @@ const styles = StyleSheet.create({
     height: 4,
     width: '100%',
     borderRadius: 2,
-    marginBottom: 4,
+    marginBottom: 3,
   },
   strengthLabel: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
   },
+
+  // ── Checkbox ──
   checkboxContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: Spacing.one,
-    paddingHorizontal: 4,
+    marginVertical: 2,
+    paddingHorizontal: 2,
     width: '100%',
   },
   checkbox: {
-    width: 18,
-    height: 18,
+    width: 17,
+    height: 17,
     borderWidth: 1.5,
     borderColor: '#C0C4CC',
     borderRadius: 4,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 10,
+    marginRight: 8,
     backgroundColor: '#FFFFFF',
   },
   checkboxChecked: {
@@ -557,43 +462,48 @@ const styles = StyleSheet.create({
   },
   checkboxText: {
     flex: 1,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
     color: '#60646C',
-    lineHeight: 16,
+    lineHeight: 15,
   },
   greenText: {
     color: '#2E8B57',
     fontWeight: '700',
   },
+
+  // ── Submit Button ──
   submitButton: {
     backgroundColor: '#1B3C18',
-    borderRadius: 24,
+    borderRadius: 22,
     paddingVertical: 12,
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
-    marginTop: Spacing.two,
+    marginTop: 4,
   },
   submitButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
+    letterSpacing: 0.2,
   },
+
+  // ── Login Link ──
   loginBackLinkRow: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: Spacing.three,
+    marginTop: 14,
   },
   alreadyHaveText: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#60646C',
     fontWeight: '600',
   },
   loginLinkText: {
     color: '#2E8B57',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
   },
 });
