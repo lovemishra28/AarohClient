@@ -12,6 +12,8 @@ expo-env.d.ts
 .env
 .env.local
 .env*.local
+# Optional local phone profile; use scripts/start-phone.ps1 instead when possible.
+.env.phone
 
 # Metro / bundler caches
 .metro-health-check*

@@ -47,3 +47,43 @@ export function scoreBandForIndex(index: number): ScoreBand {
   if (index === 1) return 'good';
   return 'fair';
 }
+
+function pad2(n: number): string {
+  return n < 10 ? `0${n}` : String(n);
+}
+
+/**
+ * Date and time of a stored reading, in the device's local zone.
+ *
+ * Deliberately all-numeric (`29/08/2026 14:32`) rather than a localised month name: this
+ * label exists so the farmer can tell two readings taken minutes apart from each other, and
+ * a purely numeric form needs no month-name translation and no dependence on Hermes' partial
+ * Intl support. 24-hour time avoids an am/pm string that would itself need translating.
+ */
+export function formatDateTime(value: string | number | Date | null | undefined): string {
+  if (value == null) return '—';
+  const d = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(d.getTime())) return '—';
+  return `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}/${d.getFullYear()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+}
+
+/** Just the clock part, for rows already grouped under a date. */
+export function formatClock(value: string | number | Date | null | undefined): string {
+  if (value == null) return '—';
+  const d = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(d.getTime())) return '—';
+  return `${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+}
+
+/** A measurement or an em dash — the one place "we have no value" is rendered. */
+export function formatOrDash(value: number | null | undefined, maxDecimals = 1): string {
+  if (value == null || !Number.isFinite(value)) return '—';
+  return formatNumber(value, maxDecimals);
+}
+
+/** `26.2183, 78.1828` — five decimals is ~1 m, past which a phone GPS is noise. */
+export function formatCoords(lat: number | null, lng: number | null): string | null {
+  if (lat == null || lng == null) return null;
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+}

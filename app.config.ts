@@ -48,6 +48,11 @@ const config = {
   assetBundlePatterns: ['**/*'],
   android: {
     package: 'com.agropulse.app',
+    permissions: [
+      'BLUETOOTH_SCAN',
+      'BLUETOOTH_CONNECT',
+      'ACCESS_FINE_LOCATION',
+    ],
     adaptiveIcon: {
       foregroundImage: './assets/images/adaptive-icon.png',
       backgroundColor: '#FFFFFF',
@@ -65,6 +70,7 @@ const config = {
     googleWebClientId: GOOGLE_WEB_CLIENT_ID,
     googleIosClientId: GOOGLE_IOS_CLIENT_ID,
   },
+  plugins: ['expo-font'],
 };
 
 export default config as ExpoConfig;

@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 
 import { useField } from '@/api/fields';
 import { useFieldRecommendations } from '@/api/recommendations';
-import type { Reading } from '@/api/types';
 import {
   Button,
   Card,
@@ -17,25 +16,22 @@ import {
   SyncBanner,
   Text,
 } from '@/components';
-import { SOIL_FIELDS } from '@/lib/soil';
-import { formatNumber } from '@/lib/format';
-import { hectaresToAcres, microSiemensToDsm } from '@/lib/units';
+import { HEAT_METRICS, areaLabel, fieldLabel, formatMetric, readingMetric } from '@/lib/fields';
+import { formatDateTime } from '@/lib/format';
 import { colors } from '@/theme/tokens';
 import type { AppScreenProps } from '@/navigation/types';
 
-/**
- * Field detail (M4) — the hub for one plot. It shows the area, the latest soil reading as a
- * tile grid (EC shown back in dS/m, the unit it was entered in), and the two next actions:
- * enter a reading by hand or get advice. Past advice for the field is listed beneath, each
- * row reopening that saved recommendation.
- */
+import { FieldHeatCard } from './FieldHeatCard';
 
-/** Reads a numeric column off a reading, converting µS/cm back to the dS/m the farmer sees. */
-function readingValue(reading: Reading, col: string): number | null {
-  const raw = (reading as Record<string, unknown>)[col];
-  if (typeof raw !== 'number' || !Number.isFinite(raw)) return null;
-  return col === 'ec_uscm' ? microSiemensToDsm(raw) : raw;
-}
+/**
+ * Field detail (M4, extended for segregation) — the hub for one plot. It shows the area and
+ * provenance, the latest soil reading as a tile grid, the fertility map for the whole plot,
+ * and the two next actions: enter a reading by hand or get advice. Past advice is listed
+ * beneath, each row reopening that saved recommendation.
+ *
+ * Units and labels come from `lib/fields`, the same table the dashboard and the map read, so
+ * this screen cannot show EC in different units from the tile two screens back.
+ */
 
 export function FieldDetailScreen({ route, navigation }: AppScreenProps<'FieldDetail'>) {
   const { t, i18n } = useTranslation();
@@ -43,7 +39,8 @@ export function FieldDetailScreen({ route, navigation }: AppScreenProps<'FieldDe
   const { data, isLoading, isError, error, refetch } = useField(fieldId);
   const { data: recs } = useFieldRecommendations(fieldId);
 
-  const title = fieldName ?? data?.field.name ?? t('fields.title');
+  // The caller passes the label it displayed, so a numbered auto-field keeps its number here.
+  const title = fieldName ?? (data ? fieldLabel(data.field, t) : t('fields.title'));
   const goReading = () => navigation.navigate('ManualReading', { fieldId, fieldName: title });
   const goAdvice = () => navigation.navigate('Recommendation', { fieldId, fieldName: title });
 
@@ -63,10 +60,26 @@ export function FieldDetailScreen({ route, navigation }: AppScreenProps<'FieldDe
           <Card>
             <Text className="text-sm text-ink-muted">{t('fieldDetail.area')}</Text>
             <Text weight="semibold" className="mt-0.5 text-body-lg text-ink">
-              {data.field.area_ha != null
-                ? `${formatNumber(hectaresToAcres(data.field.area_ha), 2)} ${t('fieldCreate.areaUnit')}`
-                : t('fields.noArea')}
+              {areaLabel(data.field, t)}
             </Text>
+            {/* Where this field came from. A boundary the farmer never drew needs saying so —
+                otherwise an auto-detected plot looks like one they forgot creating. */}
+            {data.field.source === 'auto' ? (
+              <View className="mt-2 flex-row items-center">
+                <Ionicons name="locate" size={13} color={colors.brand[600]} />
+                <Text className="ml-1.5 flex-1 text-xs text-ink-faint" numberOfLines={1}>
+                  {t('fields.autoDetected')}
+                  {data.field.detected_at
+                    ? ` · ${t('fields.detectedOn', { date: formatDateTime(data.field.detected_at) })}`
+                    : ''}
+                </Text>
+              </View>
+            ) : null}
+            {data.field.aggregate && data.field.aggregate.reading_count > 0 ? (
+              <Text className="mt-1 text-xs text-ink-faint">
+                {t('fields.readings', { count: data.field.aggregate.reading_count })}
+              </Text>
+            ) : null}
           </Card>
 
           <Text weight="semibold" className="mb-2 mt-6 text-title text-brand-700">
@@ -76,18 +89,29 @@ export function FieldDetailScreen({ route, navigation }: AppScreenProps<'FieldDe
           {reading ? (
             <>
               <View className="flex-row flex-wrap justify-between">
-                {SOIL_FIELDS.map((f) => {
-                  const v = readingValue(reading, f.col);
-                  if (v == null) return null;
+                {HEAT_METRICS.map((metric) => {
+                  const value = readingMetric(reading, metric);
+                  if (value === null) return null;
                   return (
-                    <View key={f.id} style={{ width: '48%', marginBottom: 12 }}>
-                      <MetricTile label={t(f.labelKey)} value={formatNumber(v, f.decimals)} unit={f.unit} icon={f.icon} />
+                    <View key={metric.id} style={{ width: '48%', marginBottom: 12 }}>
+                      <MetricTile
+                        label={t(metric.labelKey)}
+                        value={formatMetric(value, metric)}
+                        unit={metric.unit}
+                        icon={metric.icon}
+                      />
                     </View>
                   );
                 })}
               </View>
 
               <InfoStrip tone="info" text={t('fieldDetail.calibrationNote')} />
+
+              {/* The map earns its place here rather than only on the dashboard: this is the
+                  screen reached from a sync report, and "which part of the plot" is the first
+                  question after "how much on average". */}
+              <FieldHeatCard field={data.field} className="mt-4" />
+
               <Button label={t('fieldDetail.getAdvice')} icon="sparkles-outline" className="mt-6" onPress={goAdvice} />
               <Button
                 label={t('fieldDetail.enterReading')}

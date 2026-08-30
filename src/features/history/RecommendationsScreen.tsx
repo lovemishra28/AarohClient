@@ -12,9 +12,15 @@ import { colors } from '@/theme/tokens';
 import type { AppStackParamList } from '@/navigation/types';
 
 /**
- * History tab (M4) — every recommendation the farmer has generated, grouped by field and
- * newest-first within each. Advice is field-scoped on the server (no global list endpoint),
- * so we fan out one cached query per field; a tap reopens that saved recommendation.
+ * Recommendations tab (formerly History) — every recommendation the farmer has generated,
+ * grouped by field and newest-first within each. Advice is field-scoped on the server (no
+ * global list endpoint), so we fan out one cached query per field; a tap reopens that saved
+ * recommendation.
+ *
+ * Naming note: the tab route is `Recommendations` (plural) while the pushed result screen is
+ * `Recommendation` (singular). The distinction is load-bearing — React Navigation resolves
+ * `navigate()` against the nearest navigator first, so identical names would send a request
+ * for a fresh recommendation to this list instead.
  */
 type Nav = NativeStackNavigationProp<AppStackParamList>;
 
@@ -77,7 +83,7 @@ function FieldAdviceGroup({ field }: { field: Field }) {
   );
 }
 
-export function HistoryScreen() {
+export function RecommendationsScreen() {
   const { t } = useTranslation();
   const { data: fields, isLoading } = useFields();
 

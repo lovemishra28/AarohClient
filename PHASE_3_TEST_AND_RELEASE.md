@@ -4,6 +4,8 @@
 
 This doc tells you (1) how to run the app, (2) exactly what to test and what "pass" looks like, (3) what I could verify vs. what only you can verify on a device, and (4) the release readiness tracker.
 
+> **Later work has its own procedures.** The BLE stick link and automatic field segregation were built after this document and are tested separately: see [`FIELD_SEGREGATION_TEST.md`](FIELD_SEGREGATION_TEST.md) for the end-to-end sync → three-fields → heat-map acceptance run, and [`test-frames/README.md`](test-frames/README.md) for standing in for the stick with a second phone. Everything below still applies to the manual-input path.
+
 ---
 
 ## 1. What the app can do right now
@@ -26,19 +28,11 @@ The full money path is built and the whole codebase typechecks clean (`npm run t
 ```bash
 cd C:\AAROH-Client
 
-# 1. Install deps — package.json ships with empty deps on purpose; let Expo pick SDK-matched versions.
-npm install expo
-npx expo install react react-native react-dom \
-  @react-navigation/native @react-navigation/native-stack @react-navigation/bottom-tabs \
-  react-native-screens react-native-safe-area-context \
-  @tanstack/react-query zustand \
-  expo-secure-store expo-font expo-splash-screen expo-status-bar expo-constants \
-  @expo/vector-icons react-native-svg \
-  i18next react-i18next \
-  nativewind react-native-reanimated
-# (tailwindcss@^3.4 is already pinned in package.json — do NOT upgrade to v4, NativeWind v4 breaks on it.)
+# 1. Install deps. Versions are pinned in package.json and SDK-matched — plain install, no --force.
+npm install
+# (tailwindcss@^3.4 is pinned on purpose — do NOT upgrade to v4, NativeWind v4 breaks on it.)
 
-# 2. Start the server first (in aaroh-server): docker compose up --build db ai, then in api/: npm run migrate:up && npm run seed && npm run dev  (→ :3000)
+# 2. Start the server first (in C:\AAROH-Server): docker compose up --build db ai, then in api/: npm run migrate:up && npm run seed && npm run dev  (→ :3000, DB on host port 5433)
 
 # 3. Build + launch the dev client on the emulator
 npx expo run:android
@@ -83,6 +77,8 @@ Each step lists the action and what **pass** looks like.
 16. Generate advice on 2+ fields → open History tab. *Pass: advice grouped by field, newest first; tapping a row reopens that saved recommendation.*
 17. Stop the server and open Fields. *Pass: error state with a Retry button, not a blank screen or crash.*
 
+**G. Stick sync & automatic field segregation** — built after this plan; the procedure is [`FIELD_SEGREGATION_TEST.md`](FIELD_SEGREGATION_TEST.md). In short: load the 90-reading demo walk (or send it from a second phone), tap **Sync**, and expect "90 readings saved · 3 new fields detected" with 30 readings each, then check the averages, the fertility map's gradients and the field switcher against the tables there.
+
 ---
 
 ## 4. What I verified vs. what only you can verify
@@ -93,11 +89,15 @@ Each step lists the action and what **pass** looks like.
 | All 10 navigator-referenced screens exist | ✅ | me |
 | No "Aaroh" in any UI string (brand = AgroPulse, hi + en) | ✅ | me |
 | Every `t()` key (incl. plurals & band labels) resolves in hi + en | ✅ | me |
+| Hindi/English key sets are identical | ✅ enforced by the compiler — `hi` is typed `Resources`, a required mapped type over `en`, so a missing or extra key is a `tsc` error | me |
+| Frame pack decodes as documented (`npm run verify:frames`) | ✅ 154 assertions | me |
+| Demo survey clusters into 3 fields (`npm run mock:frames`, server `verify:clustering`) | ✅ | me |
 | App boots on emulator; fonts/Devanagari render | ⏳ needs device | **you** |
 | Live auth + refresh + session-persist against real server | ⏳ needs device + server | **you** |
 | Reading → advice numbers match server exactly | ⏳ needs device + server | **you** |
 | Offline queue + resync + no-duplicate | ⏳ needs device | **you** |
-| Hindi audio read-aloud | ❌ not enabled (see below) | **you** |
+| Hindi audio read-aloud | ✅ wired (`expo-speech` installed, static import) | ⏳ **you** on device |
+| Stick sync → 3 detected fields → heat map | ⏳ see `FIELD_SEGREGATION_TEST.md` | **you** |
 
 I cannot install packages, boot Android, or reach the server from my sandbox, so everything marked ⏳ is genuinely unverified until you run §3.
 
@@ -105,13 +105,8 @@ I cannot install packages, boot Android, or reach the server from my sandbox, so
 
 ## 5. Not done yet / known gaps
 
-1. **Hindi TTS is dormant (blocks DoD #3).** `src/lib/speech.ts` optionally loads `expo-speech`; until it's in the build, the "Listen" button simply doesn't render. To enable audio:
-   ```bash
-   npx expo install expo-speech
-   npx expo run:android      # rebuild the dev client
-   ```
-   then follow the header note in `src/lib/speech.ts` — uncomment the static `import * as StaticSpeech from 'expo-speech'` and delete the dynamic loader (Metro only bundles a statically-visible import). I left it opt-in so M4–M8 stay runnable without a rebuild; say the word and I'll do the code swap so it's ready the moment you install the package.
-2. **No automated tests.** There is no unit/integration test runner wired (no Jest/RNTL, no lint config). For a demo this is acceptable; for release I'd recommend at least unit tests on the pure helpers (`lib/units.ts` conversions, `lib/format.ts` bands/₹, `lib/advice.ts` token parsing) and the outbox drain logic. I can set that up on request.
+1. ~~**Hindi TTS is dormant.**~~ **Now enabled.** `expo-speech` is installed and `src/lib/speech.ts` imports it statically, so the "Listen" button renders. It still needs a dev-client rebuild (`npx expo run:android`) if yours predates the install, and the voice quality depends on the Hindi TTS engine present on the device — that is the part only you can judge.
+2. **No client test runner.** There is no Jest/RNTL and no eslint on the client. The gates are `npm run typecheck`, `npm run verify:frames` (154 assertions over the frame pack, using the real parser and splitter) and `npm run mock:frames`. For release I'd still add unit tests on the pure helpers (`lib/units.ts` conversions, `lib/format.ts` bands/₹, `lib/advice.ts` token parsing) and the outbox drain. The server does have vitest — run `npm test` there.
 3. **Visual-polish milestone not done.** M0–M8 are functional-first on the design tokens; the dedicated polish pass against your `DESIGN_DIRECTION.md` reference is still pending (it was always planned after the money path).
 4. **Physical-device / LAN config unproven.** Only the emulator path (`10.0.2.2`) is wired by default.
 5. **Error-copy for offline 4xx drops.** If a queued reading is rejected 4xx on drain, it's silently dropped (Phase 3 accepts this since the form validates first); a production build should surface it for correction.
@@ -124,10 +119,10 @@ I cannot install packages, boot Android, or reach the server from my sandbox, so
 |---|---|---|---|
 | 1 | Login by phone+OTP, session persists across restarts | ✅ | ⏳ |
 | 2 | Create field + area, hand-enter 6 values, get costed advice (bags + ₹) matching server | ✅ | ⏳ |
-| 3 | Advice read aloud in Hindi; bilingual UI w/ correct Devanagari | ⚠️ TTS opt-in, not enabled | ⏳ |
+| 3 | Advice read aloud in Hindi; bilingual UI w/ correct Devanagari | ✅ | ⏳ |
 | 4 | Whole flow works offline (queued) and syncs on reconnect, no duplicates | ✅ | ⏳ |
 | 5 | Every screen has loading / empty / error / offline states | ✅ | ⏳ |
 
 **Legend:** ✅ done · ⚠️ partial/opt-in · ⏳ awaiting your device run · ❌ not started
 
-**Bottom line:** the code for Phase 3 is complete and type-clean except Hindi audio (one package install + a 2-line swap away). The remaining work is *verification on the emulator against the live server* — that's step §3, and it's the part I can't do for you.
+**Bottom line:** the code for Phase 3 is complete and type-clean, Hindi audio included. The remaining work is *verification on the emulator against the live server* — that's step §3, and it's the part I can't do for you. Workstreams 1–3 (stick link, automatic segregation, heat map) sit on top of this and have their own acceptance run in [`FIELD_SEGREGATION_TEST.md`](FIELD_SEGREGATION_TEST.md).

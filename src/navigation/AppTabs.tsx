@@ -6,8 +6,8 @@ import { Text } from '@/components';
 import { colors } from '@/theme/tokens';
 
 import { HomeScreen } from '@/features/home/HomeScreen';
-import { FieldsScreen } from '@/features/fields/FieldsScreen';
-import { HistoryScreen } from '@/features/history/HistoryScreen';
+import { AnalysisScreen } from '@/features/analysis/AnalysisScreen';
+import { RecommendationsScreen } from '@/features/history/RecommendationsScreen';
 import { SettingsScreen } from '@/features/settings/SettingsScreen';
 
 import type { AppTabParamList } from './types';
@@ -19,15 +19,15 @@ type IoniconName = keyof typeof Ionicons.glyphMap;
 /** Focused/unfocused glyphs per tab — outline when idle, filled when active. */
 const ICONS: Record<keyof AppTabParamList, [IoniconName, IoniconName]> = {
   Home: ['home-outline', 'home'],
-  Fields: ['leaf-outline', 'leaf'],
-  History: ['time-outline', 'time'],
+  Analysis: ['analytics-outline', 'analytics'],
+  Recommendations: ['sparkles-outline', 'sparkles'],
   Settings: ['settings-outline', 'settings'],
 };
 
 const LABEL_KEYS: Record<keyof AppTabParamList, string> = {
   Home: 'nav.home',
-  Fields: 'nav.fields',
-  History: 'nav.history',
+  Analysis: 'nav.analysis',
+  Recommendations: 'nav.recommendation',
   Settings: 'nav.settings',
 };
 
@@ -60,8 +60,8 @@ export function AppTabs() {
       }}
     >
       <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Fields" component={FieldsScreen} />
-      <Tab.Screen name="History" component={HistoryScreen} />
+      <Tab.Screen name="Analysis" component={AnalysisScreen} />
+      <Tab.Screen name="Recommendations" component={RecommendationsScreen} />
       <Tab.Screen name="Settings" component={SettingsScreen} />
     </Tab.Navigator>
   );

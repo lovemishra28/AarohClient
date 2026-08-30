@@ -17,11 +17,18 @@ export type AuthStackParamList = {
   Otp: { phone: string; devCode?: string | null; mode: 'login' | 'signup'; name?: string };
 };
 
-/** The four bottom-tab destinations (guide §4: Home · Fields · History · Settings). */
+/**
+ * The four bottom-tab destinations: Home · Analysis · Recommendations · Settings.
+ *
+ * `Recommendations` is plural on purpose. The stack below holds a singular `Recommendation`
+ * route (the result screen), and React Navigation resolves `navigate()` against the nearest
+ * navigator before walking up to the parent — so a tab sharing that exact name would swallow
+ * every request for fresh advice.
+ */
 export type AppTabParamList = {
   Home: undefined;
-  Fields: undefined;
-  History: undefined;
+  Analysis: undefined;
+  Recommendations: undefined;
   Settings: undefined;
 };
 

@@ -95,6 +95,57 @@ Override by copying `.env.example` to `.env` and setting `EXPO_PUBLIC_API_BASE_U
 The resolved value is read through `src/lib/env.ts` and displayed on the M0 screen, so
 you can always see what the app thinks it is pointing at.
 
+### Physical Android phone or emulator without re-editing config
+
+Use the project helper scripts so you do not have to keep hand-editing `.env` or
+`app.config.ts`:
+
+```powershell
+# emulator target
+npm run start:emulator
+
+# phone target (uses the PC's LAN IPv4 automatically)
+npm run phone
+
+# choose target explicitly
+npm run start:device -- -Target emulator
+npm run start:device -- -Target phone
+```
+
+The `start:device` script auto-detects a connected emulator or device when possible, and
+falls back to the emulator default (`http://10.0.2.2:3000`) when needed. The phone
+workflow sets `EXPO_PUBLIC_API_BASE_URL` to the machine's LAN IP for that Expo session,
+so the app can connect from a real Android phone without permanently changing the repo.
+
+If the phone still cannot connect, allow Node/Docker Desktop through Windows Firewall
+on the Private network and verify `http://<PC-IP>:3000/v1/health` from the phone's
+browser. The API server must be running on the PC (`docker compose up` from the
+server repository, or `npm run dev` inside `Aaroh-Server/api`).
+
+### Bluetooth permission troubleshooting
+
+The full GATT contract, frame format, and a step-by-step nRF Connect setup for faking the
+stick with a second phone are in [`BLE_PROTOCOL.md`](./BLE_PROTOCOL.md) — including a
+checklist for the case where the device picker shows nothing.
+
+USB debugging does not control Bluetooth permission. On Android 12+, the app needs
+the **Nearby devices** permission; on Android 11 and earlier it also needs location
+permission because Android requires it for BLE scanning. The app requests the
+appropriate permission when scanning starts. If the permission was denied, enable it
+in **Settings → Apps → AgroPulse → Permissions**, then try scanning again.
+
+Because BLE uses a native module, rebuild the development client after changing
+`app.config.ts` or installing the BLE config plugin:
+
+```powershell
+npx expo prebuild --clean --platform android
+npx expo run:android
+```
+
+`--clean` is important here because the native `android` folder may already have
+been generated before the Bluetooth permissions were configured. It regenerates
+the manifest and then installs a fresh development client.
+
 ## 4. Project layout
 
 ```
