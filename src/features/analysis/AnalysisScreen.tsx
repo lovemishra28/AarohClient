@@ -80,12 +80,7 @@ function FieldsSection() {
     });
 
   return (
-    <View className="mt-7">
-      <Text weight="semibold" className="text-body-lg text-ink">
-        {t('fields.title')}
-      </Text>
-      <Text className="mt-0.5 text-sm text-ink-muted">{t('fields.subtitle')}</Text>
-
+    <View>
       {isLoading ? (
         <LoadingState />
       ) : isError ? (
@@ -128,7 +123,7 @@ export function AnalysisScreen() {
   const { t } = useTranslation();
 
   return (
-    <Screen>
+    <Screen edges={['top']}>
       <SyncBanner />
       <View className="px-5 pt-3">
         <SectionTitle>{t('analysis.title')}</SectionTitle>
@@ -140,8 +135,10 @@ export function AnalysisScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ padding: 20, paddingTop: 12, paddingBottom: 32 }}
       >
-        <ScansSection />
         <FieldsSection />
+        <View className="mt-7">
+          <ScansSection />
+        </View>
       </ScrollView>
     </Screen>
   );

@@ -5,7 +5,7 @@ import { colors } from '@/theme/tokens';
 
 import { Text } from './Text';
 
-type Variant = 'primary' | 'secondary';
+type Variant = 'primary' | 'secondary' | 'outline';
 
 type ButtonProps = Omit<PressableProps, 'children'> & {
   label: string;
@@ -31,17 +31,18 @@ export function Button({
   ...rest
 }: ButtonProps) {
   const isPrimary = variant === 'primary';
+  const isOutline = variant === 'outline';
   const inactive = disabled || loading;
 
   const container = [
     'h-touch flex-row items-center justify-center rounded-pill px-6',
-    isPrimary ? 'bg-brand-700' : 'border border-line bg-surface',
+    isPrimary ? 'bg-brand-700' : isOutline ? 'border-2 border-brand-600 bg-transparent' : 'border border-line bg-surface',
     inactive ? 'opacity-50' : '',
     className ?? '',
   ].join(' ');
 
-  const labelClass = isPrimary ? 'text-body text-white' : 'text-body text-brand-700';
-  const iconColor = isPrimary ? colors.white : colors.brand[700];
+  const labelClass = isPrimary ? 'text-body text-white' : isOutline ? 'text-body text-ink' : 'text-body text-brand-700';
+  const iconColor = isPrimary ? colors.white : isOutline ? colors.ink.default : colors.brand[700];
 
   return (
     <Pressable

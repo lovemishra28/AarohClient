@@ -1,4 +1,5 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 
@@ -38,6 +39,7 @@ const LABEL_KEYS: Record<keyof AppTabParamList, string> = {
  */
 export function AppTabs() {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   return (
     <Tab.Navigator
       screenOptions={({ route }) => {
@@ -47,7 +49,7 @@ export function AppTabs() {
           headerShown: false,
           tabBarActiveTintColor: colors.brand[700],
           tabBarInactiveTintColor: colors.ink.muted,
-          tabBarStyle: { borderTopColor: colors.line.default, height: 60, paddingBottom: 8, paddingTop: 6 },
+          tabBarStyle: { borderTopColor: colors.line.default, height: 60 + insets.bottom, paddingBottom: 8 + insets.bottom, paddingTop: 6 },
           tabBarIcon: ({ focused, color, size }) => (
             <Ionicons name={focused ? active : idle} size={size ?? 22} color={color} />
           ),

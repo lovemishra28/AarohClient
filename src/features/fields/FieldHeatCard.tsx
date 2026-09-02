@@ -4,10 +4,12 @@ import { useTranslation } from 'react-i18next';
 
 import { useFieldReadings } from '@/api/readings';
 import type { Field, Reading } from '@/api/types';
-import { Card, HeatMap, Text, type HeatPoint } from '@/components';
+import { Card, HeatMap, Text, Shimmer, type HeatPoint } from '@/components';
 import { HEAT_METRICS, formatMetric, metricById, readingMetric, type MetricDef, type MetricId } from '@/lib/fields';
 import { formatClock, formatDateTime } from '@/lib/format';
 import { pointFromGeoJson, ringFromGeoJson, type LatLng } from '@/lib/geo';
+import { hectaresToAcres, roundTo } from '@/lib/units';
+import { colors } from '@/theme/tokens';
 
 /**
  * The fertility map for one field (Workstream 3).
@@ -25,6 +27,7 @@ import { pointFromGeoJson, ringFromGeoJson, type LatLng } from '@/lib/geo';
 type FieldHeatCardProps = {
   field: Field;
   className?: string;
+  isTransitioning?: boolean;
 };
 
 /** Readings that have both a position and a value for this metric. */
@@ -40,9 +43,8 @@ function heatPoints(readings: readonly Reading[], metric: MetricDef): HeatPoint[
       lat: at.lat,
       lng: at.lng,
       value,
-      caption: `${formatMetric(value, metric)}${metric.unit ? ` ${metric.unit}` : ''} · ${
-        reading.taken_at ? formatClock(reading.taken_at) : formatDateTime(reading.created_at)
-      }`,
+      caption: `${formatMetric(value, metric)}${metric.unit ? ` ${metric.unit}` : ''} · ${reading.taken_at ? formatClock(reading.taken_at) : formatDateTime(reading.created_at)
+        }`,
     });
   }
   return points;
@@ -67,9 +69,8 @@ function MetricChip({
       accessibilityLabel={t(metric.labelKey)}
       disabled={!enabled}
       onPress={onPress}
-      className={`mr-2 rounded-pill px-3 py-1.5 ${
-        selected ? 'bg-brand-700' : enabled ? 'bg-surface-sunken' : 'bg-surface-sunken opacity-40'
-      }`}
+      className={`mr-2 rounded-pill px-3 py-1.5 ${selected ? 'bg-brand-700' : enabled ? 'bg-surface-sunken' : 'bg-surface-sunken opacity-40'
+        }`}
     >
       <Text
         weight={selected ? 'semibold' : 'regular'}
@@ -81,9 +82,9 @@ function MetricChip({
   );
 }
 
-export function FieldHeatCard({ field, className }: FieldHeatCardProps) {
+export function FieldHeatCard({ field, className, isTransitioning }: FieldHeatCardProps) {
   const { t } = useTranslation();
-  const { data: readings } = useFieldReadings(field.id);
+  const { data: readings, isFetching } = useFieldReadings(field.id);
   const [metricId, setMetricId] = useState<MetricId>('n');
 
   const metric = metricById(metricId);
@@ -118,7 +119,6 @@ export function FieldHeatCard({ field, className }: FieldHeatCardProps) {
       <Text weight="semibold" className="text-body text-ink">
         {t('heat.title')}
       </Text>
-      <Text className="mt-0.5 text-sm text-ink-muted">{t('heat.subtitle')}</Text>
 
       <ScrollView
         horizontal
@@ -137,25 +137,27 @@ export function FieldHeatCard({ field, className }: FieldHeatCardProps) {
         ))}
       </ScrollView>
 
-      <View className="mt-3">
+      <View className="mt-3 relative rounded-xl overflow-hidden" style={{ height: 280, backgroundColor: colors.surface.sunken }}>
         <HeatMap
+          height={280}
           points={points}
           boundary={boundary.length >= 3 ? boundary : undefined}
           format={(v) => `${formatMetric(v, metric)}${metric.unit ? ` ${metric.unit}` : ''}`}
-          caption={
-            metric.unit
-              ? t('heat.caption', { metric: t(metric.labelKey), unit: metric.unit })
-              : t('heat.captionNoUnit', { metric: t(metric.labelKey) })
-          }
           emptyLabel={emptyLabel}
         />
+        {field.area_ha ? (
+          <View pointerEvents="none" className="absolute inset-0 justify-center items-center">
+            <Text weight="bold" className="text-4xl text-white opacity-70">
+              {roundTo(hectaresToAcres(field.area_ha), 1)} acres
+            </Text>
+          </View>
+        ) : null}
+        {(isTransitioning || isFetching) ? (
+          <View style={{ position: 'absolute', inset: 0, zIndex: 20 }}>
+            <Shimmer width={600} />
+          </View>
+        ) : null}
       </View>
-
-      {points.length > 0 ? (
-        <Text className="mt-2 text-xs text-ink-faint">
-          {t('heat.points', { count: points.length })} · {t('heat.legend')} · {t('heat.tapHint')}
-        </Text>
-      ) : null}
     </Card>
   );
 }

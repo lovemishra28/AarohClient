@@ -40,48 +40,31 @@ export function FieldSwitcher({ fields, allFields, selectedId, onSelect }: Field
   if (fields.length === 0) return null;
 
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={{ paddingRight: 12 }}
-    >
-      {fields.map((field) => {
+    <View className="flex-row items-center flex-wrap" style={{ gap: 8 }}>
+      <Text weight="semibold" className="text-2xl text-ink mr-2">
+        Field
+      </Text>
+      {fields.map((field, index) => {
         const selected = field.id === selectedId;
-        const count = field.aggregate?.reading_count ?? 0;
         return (
           <Pressable
             key={field.id}
             accessibilityRole="button"
             accessibilityState={{ selected }}
             onPress={() => onSelect(field.id)}
-            style={{ minWidth: 136 }}
-            className={`mr-2 rounded-field border px-3 py-2.5 ${
-              selected ? 'border-brand-700 bg-brand-50' : 'border-line bg-surface'
+            className={`h-8 w-8 items-center justify-center rounded-full border ${
+              selected ? 'border-brand-600 bg-brand-600' : 'border-ink bg-surface'
             }`}
           >
-            <View className="flex-row items-center">
-              <Ionicons
-                name={field.source === 'auto' ? 'locate' : 'leaf-outline'}
-                size={13}
-                color={selected ? colors.brand[700] : colors.ink.faint}
-              />
-              <Text
-                weight="semibold"
-                className={`ml-1.5 flex-1 text-sm ${selected ? 'text-brand-700' : 'text-ink'}`}
-                numberOfLines={1}
-              >
-                {fieldLabel(field, t, labels)}
-              </Text>
-            </View>
-            <Text className="mt-1 text-xs text-ink-muted" numberOfLines={1}>
-              {count > 0 ? t('fields.readings', { count }) : t('fields.noReadings')}
-            </Text>
-            <Text className="text-xs text-ink-faint" numberOfLines={1}>
-              {areaLabel(field, t)}
+            <Text
+              weight={selected ? 'bold' : 'semibold'}
+              className={`text-sm ${selected ? 'text-white' : 'text-ink'}`}
+            >
+              {index + 1}
             </Text>
           </Pressable>
         );
       })}
-    </ScrollView>
+    </View>
   );
 }

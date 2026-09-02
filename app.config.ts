@@ -70,7 +70,7 @@ const config = {
     googleWebClientId: GOOGLE_WEB_CLIENT_ID,
     googleIosClientId: GOOGLE_IOS_CLIENT_ID,
   },
-  plugins: ['expo-font'],
+  plugins: ['expo-font', 'expo-sharing'],
 };
 
 export default config as ExpoConfig;

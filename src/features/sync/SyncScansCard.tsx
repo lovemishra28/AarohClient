@@ -193,8 +193,6 @@ export function SyncScansCard({ onOpenField, onConnect, className }: SyncScansCa
   const pending = useMemo(() => pendingScans(items).length, [items]);
   const hasPending = pending > 0;
 
-  // `NoPendingScansError` is not a failure the farmer needs an error voice for — it means
-  // the log emptied between render and tap, so state the fact plainly.
   const errorText =
     sync.error === null || sync.error === undefined
       ? null
@@ -205,49 +203,24 @@ export function SyncScansCard({ onOpenField, onConnect, className }: SyncScansCa
           : describeError(sync.error, t);
 
   return (
-    <Card className={className}>
-      <View className="flex-row items-center">
-        <View className="mr-3 h-10 w-10 items-center justify-center rounded-pill bg-brand-50">
-          <Ionicons name="cloud-upload-outline" size={18} color={colors.brand[600]} />
-        </View>
-        <View className="flex-1">
-          <Text weight="semibold" className="text-body text-ink">
-            {t('sync.uploadTitle')}
-          </Text>
-          <Text className="mt-0.5 text-sm text-ink-muted">
-            {hasPending
-              ? t('sync.waiting', { count: pending })
-              : items.length > 0
-                ? t('sync.allUploaded')
-                : t('home.connectSyncHint')}
-          </Text>
-        </View>
-      </View>
-
-      {/*
-        One primary button, whose meaning follows the state of the log. With scans waiting
-        it uploads them; with nothing waiting it opens the stick picker, because the next
-        useful act is to go and take readings. Two buttons — "connect" and "sync" — was the
-        first draft and was worse: on a dashboard, one of them is always the wrong one to
-        press, and the farmer has to work out which.
-      */}
-      <View className="mt-3">
-        <Button
-          label={
-            hasPending ? t('sync.uploadActionCount', { count: pending }) : t('home.connectSync')
-          }
-          icon={hasPending ? 'cloud-upload-outline' : 'bluetooth-outline'}
-          loading={sync.isPending}
-          disabled={!hasPending && !onConnect}
-          onPress={() => (hasPending ? sync.mutate() : onConnect?.())}
-        />
-      </View>
+    <View className={className}>
+      
+      <Button
+        label={
+          hasPending ? t('sync.uploadActionCount', { count: pending }) : t('home.connectSync')
+        }
+        icon={hasPending ? 'cloud-upload-outline' : 'bluetooth-outline'}
+        variant="outline"
+        loading={sync.isPending}
+        disabled={!hasPending && !onConnect}
+        onPress={() => (hasPending ? sync.mutate() : onConnect?.())}
+      />
 
       {errorText ? <Text className="mt-2 text-sm text-avoid-700">{errorText}</Text> : null}
 
       {sync.data ? (
         <SyncResultSummary result={sync.data.result} onOpenField={onOpenField} />
       ) : null}
-    </Card>
+    </View>
   );
 }

@@ -1,23 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, TextInput, View } from 'react-native';
+import { Image, Pressable, TextInput, View, StyleSheet } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from '@tanstack/react-query';
+import { Ionicons } from '@expo/vector-icons';
 
 import { requestOtp, updateMe, verifyOtp } from '@/api/auth';
 import { ApiError, NetworkError } from '@/api/client';
 import { Button, InfoStrip, Screen, Text } from '@/components';
 import { useAuthStore } from '@/store/authStore';
+import { colors } from '@/theme/tokens';
 import type { AuthScreenProps } from '@/navigation/types';
 
 const OTP_LENGTH = 6;
 const RESEND_SECONDS = 30;
 
-/**
- * OTP verification. Uses the common one-hidden-input pattern: a single full-width
- * TextInput captures the digits, and six styled boxes mirror them — far more robust than
- * juggling focus across six separate fields. Auto-submits on the sixth digit, with an
- * explicit Verify button as a fallback.
- */
 export function OtpScreen({ route, navigation }: AuthScreenProps<'Otp'>) {
   const { t } = useTranslation();
   const { phone, devCode, mode, name } = route.params;
@@ -38,18 +35,12 @@ export function OtpScreen({ route, navigation }: AuthScreenProps<'Otp'>) {
     mutationFn: (fullCode: string) => verifyOtp(phone, fullCode),
     onSuccess: async (result) => {
       await setSession(result, result.farmer);
-      // The OTP verify call carries no name field, so a name captured on the Sign Up
-      // form is saved with a follow-up PATCH /v1/me. Kept best-effort on purpose: a
-      // failed name save must never block a sign-in that already succeeded.
       if (mode === 'signup' && name && name.trim()) {
         try {
           const { farmer } = await updateMe({ name: name.trim() });
           useAuthStore.getState().setFarmer(farmer);
-        } catch {
-          // Ignore — see note above.
-        }
+        } catch {}
       }
-      // No navigation call needed: RootNavigator swaps to the app stack on status change.
     },
     onError: (err) => {
       setCode('');
@@ -88,38 +79,57 @@ export function OtpScreen({ route, navigation }: AuthScreenProps<'Otp'>) {
   const boxes = Array.from({ length: OTP_LENGTH }, (_, i) => code[i] ?? '');
 
   return (
-    <Screen>
-      <View className="flex-row items-center px-5 pt-2">
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => navigation.goBack()}
-          className="h-touch w-touch justify-center"
-        >
-          <Text className="text-body text-brand-700">‹ {t('common.back')}</Text>
-        </Pressable>
+    <KeyboardAwareScrollView 
+      style={styles.container} 
+      contentContainerStyle={{ flexGrow: 1 }}
+      keyboardShouldPersistTaps="handled"
+      enableOnAndroid={true}
+      extraScrollHeight={20}
+    >
+      <View className="items-center pt-16 px-6">
+        <Image
+          source={require('../../../assets/images/logo.png')}
+          style={{ width: 160, height: 50, resizeMode: 'contain' }}
+        />
+        <Text weight="bold" className="text-3xl text-brand-800 mt-5 text-center">
+          Verify Your Number
+        </Text>
+        <Text className="mt-3 text-body text-ink-muted text-center">
+          We have sent a 6-digit OTP to
+        </Text>
+        
+        <View className="flex-row items-center justify-center mt-3">
+          <Text weight="bold" className="text-xl text-ink mr-2">
+            {phone}
+          </Text>
+          <Pressable onPress={() => navigation.goBack()} className="p-1">
+            <Ionicons name="pencil" size={18} color={colors.brand[700]} />
+          </Pressable>
+        </View>
+
+        <Image
+          source={require('../../../assets/images/farmer-hero.png')}
+          style={styles.heroImage}
+        />
       </View>
 
-      <View className="flex-1 px-6 pt-6">
-        <Text weight="bold" className="text-title text-brand-700">
-          {t('auth.otpTitle')}
-        </Text>
-        <Text className="mb-8 mt-1 text-body text-ink-muted">
-          {t('auth.otpSubtitle', { phone })}
+      <View style={styles.bottomCard}>
+        <Text weight="bold" className="text-title text-ink-muted text-center mb-6">
+          Enter 6-digit OTP
         </Text>
 
-        {/* Hidden capture input, overlaid by the box row via absolute fill. */}
         <Pressable onPress={() => inputRef.current?.focus()}>
-          <View className="flex-row justify-between">
+          <View className="flex-row justify-center mb-2" style={{ gap: 8 }}>
             {boxes.map((digit, i) => {
               const active = i === code.length;
               return (
                 <View
                   key={i}
-                  className={`h-14 w-12 items-center justify-center rounded-field border bg-surface ${
-                    active ? 'border-brand-600' : digit ? 'border-brand-300' : 'border-line'
-                  }`}
+                  className={`h-14 w-12 items-center justify-center rounded-xl border ${
+                    active ? 'border-brand-600 border-2' : digit ? 'border-brand-300 border-2' : 'border-line border'
+                  } bg-surface`}
                 >
-                  <Text weight="semibold" className="text-title text-ink">
+                  <Text weight="semibold" className="text-xl text-ink">
                     {digit}
                   </Text>
                 </View>
@@ -134,29 +144,22 @@ export function OtpScreen({ route, navigation }: AuthScreenProps<'Otp'>) {
             maxLength={OTP_LENGTH}
             autoFocus
             caretHidden
-            className="absolute h-14 w-full opacity-0"
+            className="absolute h-16 w-full opacity-0"
           />
         </Pressable>
 
-        {error ? <Text className="mt-3 text-sm text-avoid-600">{error}</Text> : null}
+        {error ? <Text className="mt-1 text-center text-sm text-avoid-600">{error}</Text> : null}
 
         {devCode ? (
-          <View className="mt-4">
+          <View className="mt-2">
             <InfoStrip tone="info" text={t('auth.devHint', { code: devCode })} />
           </View>
         ) : null}
 
-        <Button
-          label={t('auth.verify')}
-          className="mt-8"
-          loading={verifyMutation.isPending}
-          onPress={() => submit(code)}
-        />
-
-        <View className="mt-5 flex-row items-center justify-center">
+        <View className="mt-6 mb-8 flex-row items-center justify-center">
           {secondsLeft > 0 ? (
-            <Text className="text-sm text-ink-muted">
-              {t('auth.otpResendIn', { seconds: secondsLeft })}
+            <Text className="text-body text-ink-muted text-center">
+              Resend OTP in <Text weight="semibold" className="text-brand-700">00:{secondsLeft.toString().padStart(2, '0')}</Text>
             </Text>
           ) : (
             <Pressable
@@ -165,13 +168,60 @@ export function OtpScreen({ route, navigation }: AuthScreenProps<'Otp'>) {
               onPress={() => resendMutation.mutate()}
               className="h-touch justify-center"
             >
-              <Text weight="semibold" className="text-sm text-brand-700">
-                {t('auth.otpResend')}
+              <Text weight="semibold" className="text-body text-brand-700">
+                Resend OTP
               </Text>
             </Pressable>
           )}
         </View>
+
+        <Button
+          label="Verify OTP"
+          className="mb-6 bg-brand-800"
+          loading={verifyMutation.isPending}
+          onPress={() => submit(code)}
+        />
+
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => navigation.goBack()}
+          className="h-touch justify-center items-center"
+        >
+          <Text weight="bold" className="text-body text-brand-700">
+            Change mobile number
+          </Text>
+        </Pressable>
       </View>
-    </Screen>
+    </KeyboardAwareScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  heroImage: {
+    width: '100%',
+    height: 380,
+    resizeMode: 'contain',
+    marginTop: 10,
+    zIndex: 1,
+  },
+  bottomCard: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingTop: 32,
+    paddingBottom: 40,
+    paddingHorizontal: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -10 },
+    shadowOpacity: 0.05,
+    shadowRadius: 20,
+    elevation: 20,
+    zIndex: 10,
+    marginTop: -80, // Overlap over the image slightly
+    flex: 1,
+  }
+});

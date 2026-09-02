@@ -1,10 +1,10 @@
-import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { useMemo, useState, useEffect } from 'react';
+import { Pressable, ScrollView, View, Platform, UIManager, InteractionManager } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
-
+import Animated, { LinearTransition, useSharedValue, useAnimatedStyle, withRepeat, withSequence, withTiming, Easing } from 'react-native-reanimated';
 import { useFields } from '@/api/fields';
 import type { Field } from '@/api/types';
 import {
@@ -36,6 +36,10 @@ import {
 import { colors } from '@/theme/tokens';
 import type { AppStackParamList } from '@/navigation/types';
 
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
 /**
  * Home dashboard — rebuilt for automatic field segregation (Workstream 3).
  *
@@ -52,6 +56,40 @@ import type { AppStackParamList } from '@/navigation/types';
  */
 type Nav = NativeStackNavigationProp<AppStackParamList>;
 
+function PulseView({ isTransitioning, children, className }: { isTransitioning: boolean, children: React.ReactNode, className?: string }) {
+  const scale = useSharedValue(1);
+
+  useEffect(() => {
+    if (isTransitioning) {
+      scale.value = withRepeat(
+        withSequence(
+          withTiming(0.95, { duration: 500, easing: Easing.inOut(Easing.ease) }),
+          withTiming(1, { duration: 500, easing: Easing.inOut(Easing.ease) })
+        ),
+        -1,
+        true
+      );
+    } else {
+      scale.value = withTiming(1, { duration: 200 });
+    }
+  }, [isTransitioning, scale]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    opacity: isTransitioning ? 0.7 : 1,
+  }));
+
+  return (
+    <Animated.View style={animatedStyle} className={className}>
+      {isTransitioning ? (
+        <View className="flex-1 justify-center items-center" />
+      ) : (
+        children
+      )}
+    </Animated.View>
+  );
+}
+
 export function HomeScreen() {
   const { t } = useTranslation();
   const navigation = useNavigation<Nav>();
@@ -59,6 +97,29 @@ export function HomeScreen() {
 
   const [connectVisible, setConnectVisible] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [gridLayoutIndex, setGridLayoutIndex] = useState(() => Math.floor(Math.random() * 4));
+
+  const handleSelectField = (id: string | null) => {
+    setIsTransitioning(true);
+    setSelectedId(id);
+    // Let the JS thread render the pill switch first, then unblock the heavy map rendering
+    InteractionManager.runAfterInteractions(() => {
+      setTimeout(() => setIsTransitioning(false), 50);
+    });
+  };
+
+  useEffect(() => {
+    setGridLayoutIndex(Math.floor(Math.random() * 4));
+  }, [selectedId]);
+
+  const layouts = useMemo(() => [
+    [{ w: '65%', h: 100 }, { w: '31%', h: 100 }, { w: '31%', h: 70 }, { w: '65%', h: 70 }],
+    [{ w: '31%', h: 100 }, { w: '65%', h: 100 }, { w: '65%', h: 70 }, { w: '31%', h: 70 }],
+    [{ w: '65%', h: 70 }, { w: '31%', h: 70 }, { w: '31%', h: 100 }, { w: '65%', h: 100 }],
+    [{ w: '31%', h: 70 }, { w: '65%', h: 70 }, { w: '65%', h: 100 }, { w: '31%', h: 100 }],
+  ], []);
+  const gridLayout = layouts[gridLayoutIndex];
 
   const ordered = useMemo(() => sortFieldsNewestFirst(fields ?? []), [fields]);
   const labels = useMemo(() => fieldLabels(fields ?? [], t), [fields, t]);
@@ -106,11 +167,10 @@ export function HomeScreen() {
   };
 
   return (
-    <Screen>
+    <Screen edges={['top']}>
       <View className="flex-row items-center justify-between px-5 pt-2">
         <BrandHeader />
         <View className="flex-row items-center">
-          <BleHeaderButton />
           <LanguageChip />
         </View>
       </View>
@@ -121,11 +181,6 @@ export function HomeScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ padding: 20, paddingTop: 8 }}
       >
-        <Text weight="bold" className="text-display text-brand-700">
-          {t('home.greeting')}
-        </Text>
-        <Text className="mt-1 text-body text-ink-muted">{t('home.subtitle')}</Text>
-
         {/* The primary action. Always mounted, so the sync report it produces stays on
             screen after the pending count drops to zero. */}
         <SyncScansCard
@@ -136,47 +191,58 @@ export function HomeScreen() {
 
         {selected ? (
           <>
-            <View className="mt-8 flex-row items-center justify-between">
-              <SectionTitle>{t('home.switcherLabel')}</SectionTitle>
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => navigation.navigate('Tabs', { screen: 'Analysis' })}
-              >
-                <Text weight="medium" className="text-sm text-brand-600">
-                  {t('common.viewAll')}
-                </Text>
-              </Pressable>
-            </View>
-            <Text className="mt-0.5 text-sm text-ink-muted">
-              {t('home.fieldCount', { count: ordered.length })}
-            </Text>
-
-            <View className="mt-3">
+            <Card className="mt-6 mb-2">
               <FieldSwitcher
                 fields={ordered}
                 allFields={fields ?? ordered}
                 selectedId={selected.id}
-                onSelect={setSelectedId}
+                onSelect={handleSelectField}
               />
-            </View>
-
-            <SectionTitle className="mt-6">{t('home.averagesTitle')}</SectionTitle>
+            </Card>
             {means.length > 0 ? (
               <>
-                <Text className="mt-0.5 text-sm text-ink-muted">
-                  {t('home.averagesSub', { count: readingCount })}
-                </Text>
-                <View className="mt-3 flex-row flex-wrap justify-between">
-                  {means.map(({ metric, value }) => (
-                    <View key={metric.id} style={{ width: '48%', marginBottom: 12 }}>
-                      <MetricTile
-                        label={t(metric.labelKey)}
-                        value={formatMetric(value, metric)}
-                        unit={metric.unit}
-                        icon={metric.icon}
-                      />
-                    </View>
-                  ))}
+                <View className="mt-3">
+                  <View className="flex-row justify-between mb-4" style={{ gap: 8 }}>
+                    {means.slice(0, 3).map(({ metric, value }) => (
+                      <PulseView
+                        key={metric.id}
+                        isTransitioning={isTransitioning}
+                        className="flex-1 rounded-full border border-ink bg-surface py-3 px-2 items-center justify-center"
+                      >
+                        <View className="mb-0.5 flex-row items-baseline justify-center flex-wrap">
+                          <Text weight="bold" className="text-3xl text-ink" adjustsFontSizeToFit numberOfLines={1}>
+                            {formatMetric(value, metric)}
+                          </Text>
+                          {metric.unit ? (
+                            <Text className="ml-1 text-[10px] text-ink-muted">
+                              {metric.unit}
+                            </Text>
+                          ) : null}
+                        </View>
+                        <Text className="text-xs text-ink-muted text-center" numberOfLines={1}>
+                          {t(metric.labelKey)}
+                        </Text>
+                      </PulseView>
+                    ))}
+                  </View>
+                  <Animated.View layout={LinearTransition} className="flex-row flex-wrap justify-between">
+                    {means.slice(3).map(({ metric, value }, index) => {
+                      const layout = gridLayout[index % 4];
+                      return (
+                        <Animated.View key={metric.id} layout={LinearTransition} style={{ width: layout.w, minWidth: 115, height: layout.h, marginBottom: 12 }}>
+                          <MetricTile
+                            label={t(metric.labelKey)}
+                            value={formatMetric(value, metric)}
+                            unit={metric.unit}
+                            icon={metric.icon}
+                            className="flex-1"
+                            compact={layout.h <= 70}
+                            isLoading={isTransitioning}
+                          />
+                        </Animated.View>
+                      );
+                    })}
+                  </Animated.View>
                 </View>
               </>
             ) : (
@@ -188,17 +254,7 @@ export function HomeScreen() {
               </Card>
             )}
 
-            <FieldHeatCard field={selected} className="mt-2" />
-
-            <View className="mt-4" style={{ gap: 12 }}>
-              <Button label={t('home.getAdvice')} icon="sparkles-outline" onPress={getAdvice} />
-              <Button
-                label={t('home.openField')}
-                icon="chevron-forward"
-                variant="secondary"
-                onPress={() => openField(selected.id)}
-              />
-            </View>
+            <FieldHeatCard field={selected} isTransitioning={isTransitioning} className="mt-2 mb-4" />
           </>
         ) : (
           <Card className="mt-8">
@@ -222,27 +278,6 @@ export function HomeScreen() {
           </Text>
         </Pressable>
 
-        <SectionTitle className="mt-6">{t('home.stepsTitle')}</SectionTitle>
-        <Card className="mt-2">
-          <StepRow
-            index={1}
-            title={t('home.step1Title')}
-            subtitle={t('home.step1Sub')}
-            icon="walk-outline"
-          />
-          <StepRow
-            index={2}
-            title={t('home.step2Title')}
-            subtitle={t('home.step2Sub')}
-            icon="cloud-upload-outline"
-          />
-          <StepRow
-            index={3}
-            title={t('home.step3Title')}
-            subtitle={t('home.step3Sub')}
-            icon="cash-outline"
-          />
-        </Card>
       </ScrollView>
 
       <ConnectStickModal visible={connectVisible} onClose={() => setConnectVisible(false)} />

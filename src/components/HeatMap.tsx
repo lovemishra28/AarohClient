@@ -66,8 +66,8 @@ const TARGET_CELL_PX = 13;
 /** Hard ceiling on cell count. ~700 Views renders smoothly; thousands do not. */
 const MAX_CELLS = 720;
 
-/** Pale → deep, the "less → more" ramp. Brand 50 / 200 / 400 / 600. */
-const RAMP = ['#F2F8EE', '#C7E0B9', '#6BA855', '#1F5A2A'] as const;
+/** Orange → green, meaning "deficiency → abundance". Accent 500 / Accent 200 / Brand 200 / Brand 600. */
+const RAMP = ['#FE7F02', '#FFD0A3', '#C7E0B9', '#1F5A2A'] as const;
 
 function hexToRgb(hex: string): [number, number, number] {
   const n = parseInt(hex.slice(1), 16);
@@ -93,9 +93,33 @@ type Cell = { left: number; top: number; size: number; color: string };
 type Plot = {
   cells: Cell[];
   dots: { point: HeatPoint; left: number; top: number }[];
+  boundaryPx?: { left: number; top: number }[];
   min: number;
   max: number;
 };
+
+function getDenseBoundary(ringPx: { left: number; top: number }[], step: number) {
+  const points: { left: number; top: number }[] = [];
+  if (ringPx.length < 3) return points;
+  
+  for (let i = 0; i < ringPx.length; i++) {
+    const p1 = ringPx[i];
+    const p2 = ringPx[(i + 1) % ringPx.length];
+    
+    const dx = p2.left - p1.left;
+    const dy = p2.top - p1.top;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    
+    const steps = Math.max(1, Math.ceil(dist / step));
+    for (let j = 0; j < steps; j++) {
+      points.push({
+        left: p1.left + (dx * j) / steps,
+        top: p1.top + (dy * j) / steps,
+      });
+    }
+  }
+  return points;
+}
 
 /**
  * Turns coordinates into pixels, once, for a known box size.
@@ -185,6 +209,7 @@ function buildPlot(
       const { left, top } = toPx(toLocalMetres(p, origin));
       return { point: p, left, top };
     }),
+    boundaryPx: hasRing ? getDenseBoundary(ring.map(toPx), 2) : undefined,
     min: range.min,
     max: range.max,
   };
@@ -248,6 +273,25 @@ export function HeatMap({
               ))}
             </View>
 
+            {plot.boundaryPx && plot.boundaryPx.length >= 3 ? (
+              <View style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} pointerEvents="none">
+                {plot.boundaryPx.map((p, i) => (
+                  <View
+                    key={i}
+                    style={{
+                      position: 'absolute',
+                      left: p.left - 2,
+                      top: p.top - 2,
+                      width: 4,
+                      height: 4,
+                      borderRadius: 2,
+                      backgroundColor: colors.ink.default,
+                    }}
+                  />
+                ))}
+              </View>
+            ) : null}
+
             {plot.dots.map(({ point, left, top }) => {
               const isSelected = point.id === selected;
               return (
@@ -300,8 +344,6 @@ export function HeatMap({
           <Text className="ml-2 text-xs text-ink-muted">{format(plot.max)}</Text>
         </View>
       ) : null}
-
-      {caption ? <Text className="mt-1.5 text-xs text-ink-faint">{caption}</Text> : null}
     </View>
   );
 }

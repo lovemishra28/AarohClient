@@ -30,7 +30,7 @@ export const hi: Resources = {
     hindi: 'हिन्दी',
   },
   nav: {
-    home: 'होम',
+    home: 'ओवरव्यू',
     analysis: 'विश्लेषण',
     recommendation: 'सलाह',
     settings: 'सेटिंग',

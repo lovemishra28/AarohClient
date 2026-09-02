@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable, View, ScrollView } from 'react-native';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -122,12 +124,38 @@ export function ScansSection() {
   const items = useScanStore((s) => s.items);
   const clear = useScanStore((s) => s.clear);
   const remove = useScanStore((s) => s.remove);
+  
   const [expanded, setExpanded] = useState(false);
-
   const visible = useMemo(
     () => (expanded ? items : items.slice(0, PREVIEW_COUNT)),
-    [items, expanded],
+    [items, expanded]
   );
+  
+  const downloadTxt = async () => {
+    if (items.length === 0) return;
+    try {
+      const header = 'Date                 | Probe | N         | P         | K         | pH   | EC         | Moist (%) | Temp (°C)\n' +
+                     '-------------------------------------------------------------------------------------------------------------\n';
+      const rows = items.map(scan => {
+        const date = formatDateTime(scan.received_at).padEnd(20, ' ');
+        const probe = (scan.probe_id ?? '-').padEnd(5, ' ');
+        const n = formatOrDash(scan.n_mgkg).padEnd(9, ' ');
+        const p = formatOrDash(scan.p_mgkg).padEnd(9, ' ');
+        const k = formatOrDash(scan.k_mgkg).padEnd(9, ' ');
+        const ph = formatOrDash(scan.ph, 2).padEnd(4, ' ');
+        const ec = formatOrDash(scan.ec_uscm, 0).padEnd(10, ' ');
+        const moist = formatOrDash(scan.moisture_vwc).padEnd(9, ' ');
+        const temp = formatOrDash(scan.soil_temp_c).padEnd(9, ' ');
+        return `${date} | ${probe} | ${n} | ${p} | ${k} | ${ph} | ${ec} | ${moist} | ${temp}`;
+      }).join('\n');
+      
+      const fileUri = FileSystem.documentDirectory + 'Scans.txt';
+      await FileSystem.writeAsStringAsync(fileUri, header + rows);
+      await Sharing.shareAsync(fileUri, { dialogTitle: 'Download Scans', UTI: 'public.plain-text' });
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const uploaded = useMemo(() => items.length - pendingScans(items).length, [items]);
 
@@ -135,63 +163,64 @@ export function ScansSection() {
 
   return (
     <View>
-      <View className="flex-row items-end justify-between">
-        <View className="flex-1">
-          <Text weight="semibold" className="text-body-lg text-ink">
-            {t('scans.title')}
-          </Text>
-          <Text className="mt-0.5 text-sm text-ink-muted">{t('scans.subtitle')}</Text>
-        </View>
-        {items.length > 0 ? (
-          <Pressable accessibilityRole="button" onPress={clear} hitSlop={8}>
-            <Text weight="medium" className="ml-2 text-sm text-avoid-700">
-              {t('scans.clear')}
+      <View className="border border-line rounded-xl overflow-hidden bg-surface-sunken">
+        {/* Box Header */}
+        <View className="flex-row items-center justify-between bg-surface px-4 py-3 border-b border-line">
+          <View className="flex-row items-center gap-3">
+            <Text weight="semibold" className="text-body-lg text-ink">
+              {t('scans.title')}
             </Text>
-          </Pressable>
-        ) : null}
+          </View>
+          {items.length > 0 ? (
+            <View className="flex-row items-center gap-4">
+              <Pressable accessibilityRole="button" onPress={downloadTxt} hitSlop={8}>
+                <Ionicons name="download-outline" size={20} color={colors.brand[700]} />
+              </Pressable>
+              <Pressable accessibilityRole="button" onPress={clear} hitSlop={8}>
+                <Text weight="medium" className="text-sm text-avoid-700">
+                  {t('scans.clear')}
+                </Text>
+              </Pressable>
+            </View>
+          ) : null}
+        </View>
+
+        {items.length === 0 ? (
+          <View className="items-center py-8">
+            <Ionicons name="bluetooth-outline" size={26} color={colors.ink.faint} />
+            <Text weight="semibold" className="mt-2 text-body text-ink">
+              {t('scans.emptyTitle')}
+            </Text>
+            <Text className="mt-1 px-4 text-center text-sm text-ink-muted">
+              {t('scans.emptyMessage')}
+            </Text>
+          </View>
+        ) : (
+          <ScrollView 
+              nestedScrollEnabled 
+              className="h-[280px]" 
+              contentContainerStyle={{ paddingHorizontal: 12, paddingBottom: 12, paddingTop: 8 }}
+              showsVerticalScrollIndicator={true}
+            >
+              {visible.map((scan) => (
+                <ScanRow key={scan.id} scan={scan} onLongPress={() => remove(scan.id)} />
+              ))}
+              {items.length > PREVIEW_COUNT ? (
+                <Pressable
+                  accessibilityRole="button"
+                  className="mt-2 items-center py-2"
+                  onPress={() => setExpanded((v) => !v)}
+                >
+                  <Text weight="medium" className="text-sm text-brand-700">
+                    {expanded ? t('common.done') : t('common.viewAll')}
+                  </Text>
+                </Pressable>
+              ) : null}
+            </ScrollView>
+          )}
       </View>
 
-      {/* Dev builds only, and above the branch rather than inside it: an empty scan log is
-          exactly the state this button exists to get out of. */}
-      <DevMockWalkCard className="mt-3" />
-
-      {items.length === 0 ? (
-        <Card className="mt-3 items-center py-6">
-          <Ionicons name="bluetooth-outline" size={26} color={colors.ink.faint} />
-          <Text weight="semibold" className="mt-2 text-body text-ink">
-            {t('scans.emptyTitle')}
-          </Text>
-          <Text className="mt-1 px-4 text-center text-sm text-ink-muted">
-            {t('scans.emptyMessage')}
-          </Text>
-        </Card>
-      ) : (
-        <>
-          {/* Sync lives here as well as on the dashboard: this is the screen a farmer opens
-              to check the walk arrived, and it would be perverse to make them go back to
-              upload it. Both cards drive the same mutation and the same store. */}
-          <SyncScansCard className="mt-3" onOpenField={openField} />
-
-          <Text className="mt-3 text-xs text-ink-faint">
-            {t('scans.count', { count: items.length })} ·{' '}
-            {t('scans.uploadedCount', { uploaded, total: items.length })} · {t('scans.localOnly')}
-          </Text>
-          {visible.map((scan) => (
-            <ScanRow key={scan.id} scan={scan} onLongPress={() => remove(scan.id)} />
-          ))}
-          {items.length > PREVIEW_COUNT ? (
-            <Pressable
-              accessibilityRole="button"
-              className="mt-3 items-center py-2"
-              onPress={() => setExpanded((v) => !v)}
-            >
-              <Text weight="medium" className="text-sm text-brand-700">
-                {expanded ? t('common.done') : t('common.viewAll')}
-              </Text>
-            </Pressable>
-          ) : null}
-        </>
-      )}
+      <DevMockWalkCard className="mt-5" />
     </View>
   );
 }

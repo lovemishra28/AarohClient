@@ -49,7 +49,7 @@ export function SettingsScreen() {
   };
 
   return (
-    <Screen>
+    <Screen edges={['top']}>
       <View className="px-5 pt-3">
         <SectionTitle>{t('settings.title')}</SectionTitle>
       </View>

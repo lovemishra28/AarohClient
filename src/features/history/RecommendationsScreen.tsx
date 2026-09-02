@@ -88,7 +88,7 @@ export function RecommendationsScreen() {
   const { data: fields, isLoading } = useFields();
 
   return (
-    <Screen>
+    <Screen edges={['top']}>
       <SyncBanner />
       <View className="px-5 pt-3">
         <SectionTitle>{t('history.title')}</SectionTitle>

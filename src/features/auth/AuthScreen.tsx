@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import {
   Image,
   KeyboardAvoidingView,
@@ -234,16 +235,14 @@ export function AuthScreen({ navigation }: AuthScreenProps<'Auth'>) {
 
   return (
     <Screen className="bg-brand-50">
-      <KeyboardAvoidingView
+      <KeyboardAwareScrollView
         className="flex-1"
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{ flexGrow: 1 }}
+        enableOnAndroid={true}
+        extraScrollHeight={20}
       >
-        <ScrollView
-          className="flex-1"
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={{ flexGrow: 1 }}
-        >
           <View style={{ position: 'relative' }}>
             <View pointerEvents="none" style={{ position: 'absolute', top: -6, left: 10 }}>
               <Ionicons
@@ -478,8 +477,7 @@ export function AuthScreen({ navigation }: AuthScreenProps<'Auth'>) {
             <Ionicons name="shield-checkmark" size={16} color={colors.brand[500]} />
             <Text className="text-sm text-ink-muted">{t('auth.secureNote')}</Text>
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+      </KeyboardAwareScrollView>
     </Screen>
   );
 }

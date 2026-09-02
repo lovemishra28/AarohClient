@@ -16,3 +16,4 @@ export { ErrorBoundary } from './ErrorBoundary';
 export { LoadingState, EmptyState, ErrorState, QueryBoundary } from './states';
 export { ConnectStickModal } from './ConnectStickModal';
 export { BleHeaderButton } from './BleHeaderButton';
+export * from './Shimmer';

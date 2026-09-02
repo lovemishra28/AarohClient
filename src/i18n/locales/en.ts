@@ -27,7 +27,7 @@ export const en = {
     hindi: 'हिन्दी',
   },
   nav: {
-    home: 'Home',
+    home: 'Overview',
     analysis: 'Analysis',
     recommendation: 'Advice',
     settings: 'Settings',
@@ -131,8 +131,6 @@ export const en = {
     step3Sub: 'Crops to grow, in 50 kg bags and rupees',
   },
   fields: {
-    title: 'Your fields',
-    subtitle: 'Each field keeps its own readings and advice.',
     addField: 'Add a field',
     emptyTitle: 'No fields yet',
     emptyMessage: 'Add your first field to begin.',
@@ -150,7 +148,7 @@ export const en = {
   },
   analysis: {
     title: 'Analysis',
-    subtitle: 'Stick readings and your fields, in one place.',
+    subtitle: 'Analyse your readings',
   },
   heat: {
     title: 'Fertility map',
@@ -166,7 +164,7 @@ export const en = {
     captionNoUnit: '{{metric}}',
   },
   scans: {
-    title: 'Stick scans',
+    title: 'Scans History',
     subtitle: 'Readings received from the sensing stick, newest first.',
     emptyTitle: 'No scans yet',
     emptyMessage: 'Connect the stick and take a reading — it will appear here.',
