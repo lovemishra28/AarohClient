@@ -26,7 +26,7 @@ export function DevMockWalkCard({ className }: { className?: string }) {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<MockWalkResult | null>(null);
 
-  if (!__DEV__) return null;
+
 
   const load = () => {
     setBusy(true);

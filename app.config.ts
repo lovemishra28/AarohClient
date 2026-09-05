@@ -66,6 +66,9 @@ const config = {
     favicon: './assets/images/favicon.png',
   },
   extra: {
+    eas: {
+      projectId: 'c2dc8de1-dedd-4421-b19a-45b5879bfe34'
+    },
     apiBaseUrl: API_BASE_URL,
     googleWebClientId: GOOGLE_WEB_CLIENT_ID,
     googleIosClientId: GOOGLE_IOS_CLIENT_ID,
