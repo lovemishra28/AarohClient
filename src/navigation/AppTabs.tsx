@@ -22,7 +22,7 @@ const ICONS: Record<keyof AppTabParamList, [IoniconName, IoniconName]> = {
   Home: ['home-outline', 'home'],
   Analysis: ['analytics-outline', 'analytics'],
   Recommendations: ['sparkles-outline', 'sparkles'],
-  Settings: ['settings-outline', 'settings'],
+  Settings: ['person-outline', 'person'],
 };
 
 const LABEL_KEYS: Record<keyof AppTabParamList, string> = {

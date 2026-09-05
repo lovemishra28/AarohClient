@@ -4,7 +4,6 @@ import Constants from 'expo-constants';
 import { useTranslation } from 'react-i18next';
 
 import { Button, Card, LanguageChip, Screen, SectionTitle, Text } from '@/components';
-import { API_BASE_URL } from '@/lib/env';
 import { useAuthStore } from '@/store/authStore';
 import { colors } from '@/theme/tokens';
 
@@ -55,10 +54,22 @@ export function SettingsScreen() {
       </View>
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, paddingTop: 12 }}>
+        <View className="mb-8 items-center">
+          <View className="h-24 w-24 items-center justify-center rounded-full bg-brand-50">
+            <Ionicons name="person" size={48} color={colors.brand[600]} />
+          </View>
+          <Text weight="semibold" className="mt-3 text-xl text-ink">
+            {farmer?.name || 'Farmer'}
+          </Text>
+        </View>
+
         <Text weight="medium" className="mb-2 text-sm text-ink-muted">
           {t('settings.account')}
         </Text>
         <Card>
+          {farmer?.name ? (
+            <Row icon="person-outline" label={t('auth.nameLabel')} value={farmer.name} />
+          ) : null}
           {/* Which identifiers exist depends on how the farmer signed up: phone+OTP,
               email, or Google. Rows are conditional rather than showing a dash for a
               door this account never used. */}
@@ -94,14 +105,6 @@ export function SettingsScreen() {
           <LanguageChip />
         </Card>
 
-        <Text weight="medium" className="mb-2 mt-6 text-sm text-ink-muted">
-          {t('settings.about')}
-        </Text>
-        <Card>
-          <Row icon="pricetag-outline" label={t('settings.appVersion')} value={version} />
-          <Row icon="server-outline" label={t('settings.apiBase')} value={API_BASE_URL} />
-        </Card>
-
         <Button
           label={t('settings.signOut')}
           variant="secondary"
@@ -109,6 +112,10 @@ export function SettingsScreen() {
           className="mt-8"
           onPress={confirmSignOut}
         />
+
+        <Text className="mt-8 text-center text-xs text-ink-muted">
+          {t('settings.appVersion')} {version}
+        </Text>
       </ScrollView>
     </Screen>
   );

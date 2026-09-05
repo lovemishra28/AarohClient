@@ -12,7 +12,7 @@ import {
 
 import { IS_DEV } from '@/lib/env';
 
-import { parseFrame, decodeBase64, encodeBase64, type ParsedFrame } from './FrameParser';
+import { parseFrame, parseControlFrame, decodeBase64, encodeBase64, type ParsedFrame, type ControlFrame } from './FrameParser';
 import type {
   BleConnectionState,
   BleFailure,
@@ -62,6 +62,8 @@ function describe(err: unknown): string {
 
 /** The only key the wire format permits ahead of `ID` — see BLE_PROTOCOL.md §2. */
 const VERSION_PREFIX_RE = /^V\s*:\s*\d+$/;
+/** Control frames prefix ahead of `ID`. */
+const CONTROL_PREFIX_RE = /^CMD\s*:\s*[A-Z_]+$/;
 
 /**
  * Cuts a string at every frame start — an `ID:` that begins the string or is not part of
@@ -87,15 +89,17 @@ function splitOnFrameStarts(input: string): string[] {
     .slice(0, starts[0])
     .trim()
     .replace(/,+$/, '');
-  const versionPrefix = VERSION_PREFIX_RE.test(prefix) ? `${prefix},` : '';
-  if (prefix && !versionPrefix) pieces.push(prefix);
+  const isVersion = VERSION_PREFIX_RE.test(prefix);
+  const isControl = CONTROL_PREFIX_RE.test(prefix);
+  const validPrefix = (isVersion || isControl) ? `${prefix},` : '';
+  if (prefix && !validPrefix) pieces.push(prefix);
 
   for (let i = 0; i < starts.length; i++) {
     const piece = input.slice(starts[i], starts[i + 1] ?? input.length).trim();
     if (!piece) continue;
     // A trailing comma is what's left when the split lands mid-frame.
     const cleaned = piece.replace(/,+$/, '');
-    pieces.push(i === 0 ? `${versionPrefix}${cleaned}` : cleaned);
+    pieces.push(i === 0 ? `${validPrefix}${cleaned}` : cleaned);
   }
   return pieces;
 }
@@ -104,6 +108,7 @@ export interface BleStateListener {
   onStateChange?: (state: BleConnectionState) => void;
   onDevicesChanged?: (devices: DiscoveredDevice[]) => void;
   onFrameReceived?: (frame: ParsedFrame) => void;
+  onControlFrame?: (frame: ControlFrame) => void;
   onFailure?: (failure: BleFailure) => void;
 }
 
@@ -508,6 +513,14 @@ class BleService {
     if (!trimmed) return;
 
     for (const candidate of splitOnFrameStarts(trimmed)) {
+      // Check for control frames first (CMD:STATUS, CMD:SYNC_DONE)
+      const control = parseControlFrame(candidate);
+      if (control) {
+        log('control frame', control.command, control.count);
+        for (const l of this.listeners) l.onControlFrame?.(control);
+        continue;
+      }
+
       const frame = parseFrame(candidate);
       if (!frame) {
         // Distinguish the two ways a fragment fails, because they need different fixes.

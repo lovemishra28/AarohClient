@@ -11,6 +11,7 @@ export { BrandHeader } from './BrandHeader';
 export { LanguageChip } from './LanguageChip';
 export { ScreenHeader } from './ScreenHeader';
 export { SyncBanner } from './SyncBanner';
+export { StickSyncBanner } from './StickSyncBanner';
 export { SpeakButton } from './SpeakButton';
 export { ErrorBoundary } from './ErrorBoundary';
 export { LoadingState, EmptyState, ErrorState, QueryBoundary } from './states';

@@ -7,18 +7,24 @@ import { colors } from '@/theme/tokens';
 
 import { AuthNavigator } from './AuthNavigator';
 import { AppNavigator } from './AppNavigator';
+import { ProfileCompleteScreen } from '@/features/auth/ProfileCompleteScreen';
 
 /**
- * Root switch. Auth status decides which stack mounts:
- *   loading         → branded splash while tokens hydrate
- *   unauthenticated → AuthNavigator (phone → OTP)
- *   authenticated   → AppNavigator
+ * Root switch. Auth status *and* profile completeness decide which tree mounts:
+ *   loading                       → branded splash while tokens hydrate
+ *   unauthenticated               → AuthNavigator (phone → OTP)
+ *   authenticated, no name yet    → ProfileComplete (one-time name capture)
+ *   authenticated, name present   → AppNavigator
  *
- * Because the two stacks are swapped wholesale, there is no imperative navigation on
- * login or logout — the store flips status and React remounts the right tree.
+ * Gating on farmer.name *here* — rather than pushing a screen from OtpScreen — is what
+ * makes the prompt reliable. The instant setSession flips status to 'authenticated', the
+ * AuthNavigator unmounts, so any imperative navigation.replace() from inside it never
+ * lands. Because the gate is store-driven, a new user from ANY door (phone, email, or
+ * Google) who has no name set passes through the exact same name-capture step.
  */
 export function RootNavigator() {
   const status = useAuthStore((s) => s.status);
+  const farmer = useAuthStore((s) => s.farmer);
 
   if (status === 'loading') {
     return (
@@ -31,9 +37,22 @@ export function RootNavigator() {
     );
   }
 
+  if (status === 'authenticated') {
+    // An authenticated farmer with no name must complete their profile before the app
+    // opens. setFarmer (after updateMe) re-runs this gate and swaps in the app.
+    if (!farmer?.name || !farmer.name.trim()) {
+      return <ProfileCompleteScreen />;
+    }
+    return (
+      <NavigationContainer>
+        <AppNavigator />
+      </NavigationContainer>
+    );
+  }
+
   return (
     <NavigationContainer>
-      {status === 'authenticated' ? <AppNavigator /> : <AuthNavigator />}
+      <AuthNavigator />
     </NavigationContainer>
   );
 }

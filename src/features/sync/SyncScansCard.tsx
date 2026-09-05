@@ -7,6 +7,7 @@ import { useFields } from '@/api/fields';
 import { NoPendingScansError, useSyncScans } from '@/api/sync';
 import type { SyncResult } from '@/api/types';
 import { Button, Card, Text } from '@/components';
+import { useBle } from '@/lib/ble/BleContext';
 import { describeError, isOfflineError } from '@/lib/errors';
 import { fieldLabel, fieldLabels } from '@/lib/fields';
 import { pendingScans, useScanStore } from '@/store/scanStore';
@@ -147,12 +148,9 @@ export function SyncResultSummary({
       })}
 
       {result.unassigned > 0 ? (
-        <>
-          <Line icon="help-circle-outline" color={colors.invest[600]}>
-            {t('sync.unassigned', { count: result.unassigned })}
-          </Line>
-          <Text className="mt-0.5 pl-6 text-xs text-ink-faint">{t('sync.unassignedHint')}</Text>
-        </>
+        <Line icon="help-circle-outline" color={colors.invest[600]}>
+          {t('sync.unassigned', { count: result.unassigned })}
+        </Line>
       ) : null}
 
       {result.warnings.length > 0 ? (
@@ -189,9 +187,31 @@ export function SyncScansCard({ onOpenField, onConnect, className }: SyncScansCa
   const { t } = useTranslation();
   const items = useScanStore((s) => s.items);
   const sync = useSyncScans();
+  const { state, pendingStickReadings, requestSync, syncState } = useBle();
+
+  const isConnected = state === 'Connected';
+  const hasStickPending = pendingStickReadings > 0;
 
   const pending = useMemo(() => pendingScans(items).length, [items]);
   const hasPending = pending > 0;
+
+  let defaultLabel = t('home.connectSync');
+  let defaultVariant = 'outline';
+  let defaultIcon = 'bluetooth-outline';
+
+  if (hasStickPending) {
+    defaultLabel = t('stickSync.syncActionCount', { count: pendingStickReadings });
+    defaultVariant = 'primary';
+    defaultIcon = 'cloud-download-outline';
+  } else if (hasPending) {
+    defaultLabel = t('sync.uploadActionCount', { count: pending });
+    defaultVariant = 'outline';
+    defaultIcon = 'cloud-upload-outline';
+  } else if (isConnected) {
+    defaultLabel = t('home.connectedAndReady');
+    defaultVariant = 'primary';
+    defaultIcon = 'bluetooth';
+  }
 
   const errorText =
     sync.error === null || sync.error === undefined
@@ -206,14 +226,20 @@ export function SyncScansCard({ onOpenField, onConnect, className }: SyncScansCa
     <View className={className}>
       
       <Button
-        label={
-          hasPending ? t('sync.uploadActionCount', { count: pending }) : t('home.connectSync')
-        }
-        icon={hasPending ? 'cloud-upload-outline' : 'bluetooth-outline'}
-        variant="outline"
-        loading={sync.isPending}
-        disabled={!hasPending && !onConnect}
-        onPress={() => (hasPending ? sync.mutate() : onConnect?.())}
+        label={defaultLabel}
+        icon={defaultIcon as any}
+        variant={defaultVariant as any}
+        loading={sync.isPending || syncState === 'syncing'}
+        disabled={(!hasPending && !hasStickPending && !onConnect) || syncState === 'syncing'}
+        onPress={() => {
+          if (hasStickPending) {
+            void requestSync();
+          } else if (hasPending) {
+            sync.mutate();
+          } else {
+            onConnect?.();
+          }
+        }}
       />
 
       {errorText ? <Text className="mt-2 text-sm text-avoid-700">{errorText}</Text> : null}

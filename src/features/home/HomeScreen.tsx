@@ -18,6 +18,7 @@ import {
   Screen,
   SectionTitle,
   StepRow,
+  StickSyncBanner,
   SyncBanner,
   Text,
 } from '@/components';
@@ -175,6 +176,7 @@ export function HomeScreen() {
         </View>
       </View>
       <SyncBanner />
+      <StickSyncBanner />
 
       <ScrollView
         className="flex-1"

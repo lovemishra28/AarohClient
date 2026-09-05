@@ -30,7 +30,7 @@ function topPick(rec: Recommendation, lang: string): string | null {
   return lang === 'hi' ? pick.crop_hi : pick.crop;
 }
 
-function FieldAdviceGroup({ field }: { field: Field }) {
+function FieldAdviceGroup({ field, index }: { field: Field; index: number }) {
   const { t, i18n } = useTranslation();
   const navigation = useNavigation<Nav>();
   const { data: recs } = useFieldRecommendations(field.id);
@@ -41,7 +41,7 @@ function FieldAdviceGroup({ field }: { field: Field }) {
     <View className="mt-5">
       <View className="flex-row items-center justify-between">
         <Text weight="semibold" className="flex-1 text-body-lg text-ink" numberOfLines={1}>
-          {field.name ?? t('fields.title')}
+          {field.name || t('fields.autoLabel', { index })}
         </Text>
         <Text className="ml-2 text-sm text-ink-muted">
           {items.length > 0 ? t('history.adviceCount', { count: items.length }) : t('history.noAdviceYet')}
@@ -92,7 +92,6 @@ export function RecommendationsScreen() {
       <SyncBanner />
       <View className="px-5 pt-3">
         <SectionTitle>{t('history.title')}</SectionTitle>
-        <Text className="mt-1 text-body text-ink-muted">{t('history.subtitle')}</Text>
       </View>
 
       {isLoading ? (
@@ -101,8 +100,8 @@ export function RecommendationsScreen() {
         <EmptyState icon="time-outline" title={t('history.emptyTitle')} message={t('history.emptyMessage')} />
       ) : (
         <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, paddingTop: 0 }}>
-          {fields.map((field) => (
-            <FieldAdviceGroup key={field.id} field={field} />
+          {fields.map((field, index) => (
+            <FieldAdviceGroup key={field.id} field={field} index={index + 1} />
           ))}
         </ScrollView>
       )}

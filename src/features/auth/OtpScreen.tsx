@@ -7,7 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { requestOtp, updateMe, verifyOtp } from '@/api/auth';
 import { ApiError, NetworkError } from '@/api/client';
-import { Button, InfoStrip, Screen, Text } from '@/components';
+import { Button, InfoStrip, Text } from '@/components';
 import { useAuthStore } from '@/store/authStore';
 import { colors } from '@/theme/tokens';
 import type { AuthScreenProps } from '@/navigation/types';
@@ -35,12 +35,20 @@ export function OtpScreen({ route, navigation }: AuthScreenProps<'Otp'>) {
     mutationFn: (fullCode: string) => verifyOtp(phone, fullCode),
     onSuccess: async (result) => {
       await setSession(result, result.farmer);
+
+      // If sign-up captured a name, patch it immediately so the profile is already
+      // complete and the RootNavigator name-gate opens the app without an extra step.
       if (mode === 'signup' && name && name.trim()) {
         try {
-          const { farmer } = await updateMe({ name: name.trim() });
-          useAuthStore.getState().setFarmer(farmer);
-        } catch {}
+          const updated = await updateMe({ name: name.trim() });
+          useAuthStore.getState().setFarmer(updated.farmer);
+        } catch {
+          // Non-fatal: if the patch fails, RootNavigator routes to ProfileComplete so the
+          // farmer can enter their name there.
+        }
       }
+      // No navigation here. setSession flips auth status to 'authenticated'; RootNavigator
+      // then either opens the app (name present) or shows ProfileComplete (name missing).
     },
     onError: (err) => {
       setCode('');

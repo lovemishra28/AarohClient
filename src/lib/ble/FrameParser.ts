@@ -56,6 +56,19 @@ export interface ParsedFrame {
   reading: ProbeReading;
 }
 
+/**
+ * A control frame from the stick — not a soil reading, but a protocol message.
+ * `CMD:STATUS,COUNT:5` tells the app how many readings the stick has stored.
+ * `CMD:SYNC_DONE` signals that the stick has finished sending stored readings.
+ */
+export interface ControlFrame {
+  probe_id: string;
+  firmware_version: string;
+  command: 'STATUS' | 'SYNC_DONE' | string;
+  count: number | null;
+  raw_frame: string;
+}
+
 /** Every key this version consumes; anything else lands in `unknown_keys`. */
 const KNOWN_KEYS = new Set([
   'V',
@@ -73,6 +86,8 @@ const KNOWN_KEYS = new Set([
   'Lat',
   'Lng',
   'TS',
+  'CMD',
+  'COUNT',
 ]);
 
 /** Base64 (as BLE characteristics carry it) → plain string. */
@@ -188,6 +203,34 @@ export function parseFrame(frame: string): ParsedFrame | null {
       unknown_keys: unknown,
     },
     reading,
+  };
+}
+
+/**
+ * Try to parse a frame as a control message (CMD:STATUS, CMD:SYNC_DONE).
+ * Returns null if this is a regular sensor frame rather than a control frame.
+ */
+export function parseControlFrame(frame: string): ControlFrame | null {
+  if (!frame || typeof frame !== 'string') return null;
+
+  const map: Record<string, string> = {};
+  for (const pair of frame.trim().split(',')) {
+    const sep = pair.indexOf(':');
+    if (sep <= 0) continue;
+    const key = pair.slice(0, sep).trim();
+    const value = pair.slice(sep + 1).trim();
+    if (key) map[key] = value;
+  }
+
+  const cmd = map['CMD'];
+  if (!cmd) return null;
+
+  return {
+    probe_id: map['ID'] ?? 'unknown',
+    firmware_version: map['FW'] ?? 'unknown',
+    command: cmd,
+    count: map['COUNT'] !== undefined ? (parseFloat(map['COUNT']) || 0) : null,
+    raw_frame: frame,
   };
 }
 

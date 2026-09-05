@@ -1,8 +1,9 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 import { bleService } from './BleService';
-import { isStorableFrame, type ParsedFrame } from './FrameParser';
+import { isStorableFrame, type ControlFrame, type ParsedFrame } from './FrameParser';
 import type { BleConnectionState, BleFailure, DiscoveredDevice } from './types';
+import { useScanStore } from '@/store/scanStore';
 
 /**
  * The only thing the UI is allowed to see of the BLE stack.
@@ -11,6 +12,9 @@ import type { BleConnectionState, BleFailure, DiscoveredDevice } from './types';
  * and `BleFailure`, both plain data. That is what keeps the radio's concerns out of the
  * components and makes the screens renderable in a test without a native module.
  */
+
+export type SyncState = 'idle' | 'syncing' | 'done';
+
 interface BleContextValue {
   state: BleConnectionState;
   devices: DiscoveredDevice[];
@@ -26,6 +30,16 @@ interface BleContextValue {
   connect: (deviceId: string) => Promise<void>;
   disconnect: () => Promise<void>;
   clearSession: () => void;
+  /** Number of readings the stick reports it has stored, from CMD:STATUS. */
+  pendingStickReadings: number;
+  /** Current sync state: idle → syncing → done → idle. */
+  syncState: SyncState;
+  /** Send the SYNC command to the stick to start transferring stored readings. */
+  requestSync: () => Promise<void>;
+  /** Send the ACK command to the stick to confirm receipt and clear its storage. */
+  confirmSync: () => Promise<void>;
+  /** Dismiss the sync-done state and return to idle. */
+  dismissSync: () => void;
 }
 
 const BleContext = createContext<BleContextValue | null>(null);
@@ -41,6 +55,10 @@ export function BleProvider({ children }: { children: React.ReactNode }) {
   const [sessionFrames, setSessionFrames] = useState<ParsedFrame[]>([]);
   const [failure, setFailure] = useState<BleFailure | null>(null);
 
+  // Stick sync state
+  const [pendingStickReadings, setPendingStickReadings] = useState(0);
+  const [syncState, setSyncState] = useState<SyncState>('idle');
+
   useEffect(() => {
     const listener = {
       onStateChange: (next: BleConnectionState) => {
@@ -51,6 +69,11 @@ export function BleProvider({ children }: { children: React.ReactNode }) {
         // Read through the service rather than tracking it here: the device can also drop
         // on its own, and that path never goes through connect().
         setConnectedDeviceId(bleService.getConnectedDeviceId());
+        // Reset sync state on disconnect
+        if (next === 'Disconnected') {
+          setPendingStickReadings(0);
+          setSyncState('idle');
+        }
       },
       onDevicesChanged: (list: DiscoveredDevice[]) => {
         // The service owns dedup and ordering and hands over a finished list, so RSSI
@@ -60,11 +83,24 @@ export function BleProvider({ children }: { children: React.ReactNode }) {
       onFrameReceived: (frame: ParsedFrame) => {
         if (!isStorableFrame(frame)) return;
         setLatestFrame(frame);
+        useScanStore.getState().record(frame);
         setSessionFrames((prev) =>
           prev.length >= MAX_SESSION_FRAMES
             ? [...prev.slice(prev.length - MAX_SESSION_FRAMES + 1), frame]
             : [...prev, frame],
         );
+      },
+      onControlFrame: (control: ControlFrame) => {
+        if (control.command === 'STATUS') {
+          setPendingStickReadings(control.count ?? 0);
+        } else if (control.command === 'SYNC_DONE') {
+          // All readings have been transferred — automatically send ACK to clear stick
+          setSyncState('done');
+          void bleService.sendCommand('ACK').catch(() => {
+            // ACK failed — the stick will still have the readings for next time
+          });
+          setPendingStickReadings(0);
+        }
       },
       onFailure: (next: BleFailure) => setFailure(next),
     };
@@ -94,6 +130,29 @@ export function BleProvider({ children }: { children: React.ReactNode }) {
     setLatestFrame(null);
   }, []);
 
+  const requestSync = useCallback(async () => {
+    setSyncState('syncing');
+    try {
+      await bleService.sendCommand('SYNC');
+    } catch {
+      setSyncState('idle');
+    }
+  }, []);
+
+  const confirmSync = useCallback(async () => {
+    try {
+      await bleService.sendCommand('ACK');
+      setPendingStickReadings(0);
+      setSyncState('done');
+    } catch {
+      // ACK delivery failed — not critical, readings are already in the app
+    }
+  }, []);
+
+  const dismissSync = useCallback(() => {
+    setSyncState('idle');
+  }, []);
+
   const value = useMemo<BleContextValue>(
     () => ({
       state,
@@ -108,6 +167,11 @@ export function BleProvider({ children }: { children: React.ReactNode }) {
       connect,
       disconnect,
       clearSession,
+      pendingStickReadings,
+      syncState,
+      requestSync,
+      confirmSync,
+      dismissSync,
     }),
     [
       state,
@@ -121,6 +185,11 @@ export function BleProvider({ children }: { children: React.ReactNode }) {
       connect,
       disconnect,
       clearSession,
+      pendingStickReadings,
+      syncState,
+      requestSync,
+      confirmSync,
+      dismissSync,
     ],
   );
 
