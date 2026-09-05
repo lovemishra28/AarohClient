@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Pressable, View, ScrollView } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
@@ -124,7 +124,12 @@ export function ScansSection() {
   const items = useScanStore((s) => s.items);
   const clear = useScanStore((s) => s.clear);
   const remove = useScanStore((s) => s.remove);
+  const fetchHistory = useScanStore((s) => s.fetchHistory);
   
+  React.useEffect(() => {
+    void fetchHistory();
+  }, [fetchHistory]);
+
   const [expanded, setExpanded] = useState(false);
   const visible = useMemo(
     () => (expanded ? items : items.slice(0, PREVIEW_COUNT)),

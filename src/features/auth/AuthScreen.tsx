@@ -71,6 +71,9 @@ function googleErrorMessage(reason: GoogleAuthErrorReason, t: TFn): string {
     case 'network':
       return t('health.failed');
     default:
+      if (reason?.startsWith('unknown_')) {
+        return `${t('auth.googleError')} (Code: ${reason.split('_')[1]})`;
+      }
       return t('auth.googleError');
   }
 }

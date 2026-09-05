@@ -3,9 +3,10 @@ import { create } from 'zustand';
 import { getMe, logout, refreshTokens } from '@/api/auth';
 import { ApiError, registerAuthProvider } from '@/api/client';
 import type { Farmer, TokenBundle } from '@/api/types';
+import { queryClient } from '@/api/queryClient';
 import { signOutGoogle } from '@/lib/googleSession';
 import { clearTokens, loadTokens, saveTokens } from '@/lib/secureStore';
-
+import { useScanStore } from './scanStore';
 /**
  * Auth session store (M3).
  *
@@ -82,6 +83,11 @@ export const useAuthStore = create<AuthState>()((set) => ({
     }
     await signOutGoogle();
     await clearTokens();
+    useScanStore.getState().clear();
+    
+    // Clear React Query cache so the next user doesn't see old data for a split second
+    queryClient.clear();
+    
     set({ status: 'unauthenticated', tokens: null, farmer: null });
   },
 }));

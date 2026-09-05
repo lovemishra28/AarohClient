@@ -2,6 +2,8 @@ import { create } from 'zustand';
 
 import type { ParsedFrame } from '@/lib/ble/FrameParser';
 import { newId } from '@/lib/id';
+import { api } from '@/api/client';
+import type { HistoryReading } from '@/api/types';
 import { loadJson, removeJson, saveJson } from '@/lib/secureStore';
 
 /**
@@ -81,6 +83,8 @@ type ScanState = {
   items: ScannedReading[];
   hydrated: boolean;
   hydrate: () => Promise<void>;
+  /** Fetch past scans from the server and merge them into the local store. */
+  fetchHistory: () => Promise<void>;
   /** Store one decoded frame. Returns the row, or null when it was a duplicate. */
   record: (frame: ParsedFrame) => ScannedReading | null;
   /**
@@ -151,6 +155,50 @@ export const useScanStore = create<ScanState>()((set, get) => ({
       ? stored.filter((r): r is ScannedReading => !!r && typeof r.received_at === 'string')
       : [];
     set({ items, hydrated: true });
+  },
+
+  fetchHistory: async () => {
+    try {
+      const history = await api.get<HistoryReading[]>('/v1/readings/history');
+      const serverItems: ScannedReading[] = history.map((r) => ({
+        id: r.id,
+        received_at: r.taken_at,
+        measured_at: r.taken_at, // HistoryReading has taken_at
+        probe_id: r.device_serial ?? 'Unknown',
+        firmware_version: r.device_firmware_version ?? 'Unknown',
+        device_model: null,
+        session_id: r.session_id,
+        n_mgkg: r.n_mgkg,
+        p_mgkg: r.p_mgkg,
+        k_mgkg: r.k_mgkg,
+        ph: r.ph,
+        ec_uscm: r.ec_uscm,
+        moisture_vwc: r.moisture_vwc,
+        soil_temp_c: r.soil_temp_c,
+        lat: r.location?.coordinates[1] ?? null,
+        lng: r.location?.coordinates[0] ?? null,
+        raw_frame: r.raw_frame,
+        uploaded_at: r.created_at,
+      }));
+
+      const current = get().items;
+      // Keep any pending scans that haven't been uploaded yet
+      const unuploaded = current.filter((r) => r.uploaded_at === null);
+      
+      // Map out all IDs to avoid duplicates
+      const unuploadedIds = new Set(unuploaded.map((r) => r.id));
+      const newItems = [...unuploaded, ...serverItems.filter((r) => !unuploadedIds.has(r.id))];
+      
+      // Sort newest first
+      newItems.sort((a, b) => b.received_at.localeCompare(a.received_at));
+      
+      const items = newItems.slice(0, MAX_SCANS);
+      set({ items });
+      persist(items);
+    } catch (e) {
+      // Offline or server down; just retain local state
+      console.warn('Failed to fetch scan history', e);
+    }
   },
 
   record: (frame) => {

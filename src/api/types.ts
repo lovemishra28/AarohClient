@@ -207,6 +207,12 @@ export type ReadingsIngestResult = {
   duplicate_count: number;
 };
 
+export type HistoryReading = Reading & {
+  session_id: string | null;
+  device_serial: string | null;
+  device_firmware_version: string | null;
+};
+
 /* ─── Sync (Workstream 2) ────────────────────────────────────────────────── */
 
 /**

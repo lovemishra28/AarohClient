@@ -96,7 +96,8 @@ export function useGoogleAuth() {
         } else if (String(err.code) === DEVELOPER_ERROR) {
           setErrorReason('developer_error');
         } else {
-          setErrorReason('unknown');
+          // Pass the raw error code so we can see it in the UI (e.g. 12500)
+          setErrorReason(`unknown_${String(err.code)}` as any);
         }
       } else if (err instanceof NetworkError) {
         setErrorReason('network');
